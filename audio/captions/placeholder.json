@@ -17,7 +17,8 @@
     {
         "start": 30,
         "end": 35,
-        "text": "This is the fourth caption."
+        "text": "This is the fourth caption.",
+        "text2": "you can have two texts"
     },
     {
         "start": 35,
