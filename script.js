@@ -35,14 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
             cur_canvasCtx.fillStyle = 'white';
             cur_canvasCtx.fillRect(0, 0, cur_canvas.width, cur_canvas.height);
         } else {
-            cur_canvasCtx.globalAlpha = 0.1; // Set the opacity for the previous frame
+            cur_canvasCtx.globalAlpha = 0.5; // Set the opacity for the previous frame
             cur_canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // White with reduced opacity
             cur_canvasCtx.fillRect(0, 0, cur_canvas.width, cur_canvas.height);
             cur_canvasCtx.globalAlpha = 1; // Reset the opacity to normal
         }
 
         cur_canvasCtx.lineWidth = 2;
-        cur_canvasCtx.strokeStyle = (blurframes) ? 'rgb(200,200,200)' : 'rgb(0, 0, 0)';
+        cur_canvasCtx.strokeStyle = (blurframes) ? 'rgb(50,50,50)' : 'rgb(0, 0, 0)';
 
         cur_canvasCtx.beginPath();
 
