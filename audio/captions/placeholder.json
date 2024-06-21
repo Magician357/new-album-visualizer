@@ -1,0 +1,32 @@
+[
+    {
+        "start": 0,
+        "end": 5,
+        "text": "this is a placeholder caption"
+    },
+    {
+        "start": 10,
+        "end": 15,
+        "text": "upload the real captions"
+    },
+    {
+        "start": 20,
+        "end": 25,
+        "text": "i know how to count"
+    },
+    {
+        "start": 30,
+        "end": 35,
+        "text": "This is the fourth caption."
+    },
+    {
+        "start": 35,
+        "end": 41,
+        "text": "the song is ending now"
+    },
+    {
+        "start": 45,
+        "end": 50,
+        "text": "echoing..."
+    }
+]

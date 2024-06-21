@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 body {
     margin: 0;
     height: 100vh;
@@ -191,7 +193,7 @@ body {
 #settings {
     background-color: white;
     width: 500px;
-    height: 100px;
+    height: fit-content;
 }
 
 .miscwindow {
@@ -213,6 +215,17 @@ body {
     margin-top: 25px;
 }
 
+.miscwindow div{
+    font-family: "Space Mono", monospace;
+    font-weight: 400;
+    font-style: normal;
+    font-size: small;
+    width: 120px;
+    height: 90px;
+    /* border: 1px solid black; */
+    margin-top: 40px;
+}
+
 #now_playing.miscwindow {
     background-image: url(images/window3.gif);
     right: 50px;
@@ -221,13 +234,6 @@ body {
     width: 175px;
     height: 175px;
     background-size: cover;
-}
-
-#now_playing.miscwindow div {
-    width: 120px;
-    height: 90px;
-    /* border: 1px solid black; */
-    margin-top: 40px;
 }
 
 #miscarea1 {
@@ -248,4 +254,12 @@ body {
     top: 70%;
     right: -5%;
     transform: translate(-50%,-50%);
+}
+
+input::file-selector-button,p.filelabel{
+    display: inline;
+}
+
+p.filelabel{
+    color:white;
 }

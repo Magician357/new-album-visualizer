@@ -105,7 +105,35 @@ document.addEventListener('DOMContentLoaded', () => {
         cur_canvasCtx.stroke();
     }
 
-    function draw() {
+    const captionDivs = document.querySelectorAll('.caption');
+
+    var captions = [];
+    
+    // Fetch captions from JSON file when the page loads
+    window.addEventListener('load', () => {
+        fetch('audio/captions/placeholder.json')
+            .then(response => response.json())
+            .then(data => {
+                captions = data;
+            })
+            .catch(error => console.error('Error loading captions:', error));
+    });
+
+    const updateCaptions = () => {
+        const {currentTime} = audioElement;
+
+        const currentCaption = captions.find(caption => currentTime >= caption.start && currentTime < caption.end);
+
+        captionDivs.forEach(div => {
+            if (currentCaption) {
+                div.innerText = currentCaption.text;
+            } else {
+                div.innerText = '';
+            }
+        });
+    }
+
+    const draw = () => {
         requestAnimationFrame(draw);
 
         analyser.getByteTimeDomainData(dataArray);
@@ -113,6 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         draw_for_canvas(canvasCtx,canvas,true);
 
         draw_for_canvas(canvasCtx2,canvas2);
+
+        updateCaptions();
     }
 
     audioElement.addEventListener('play', () => {
@@ -131,6 +161,22 @@ document.addEventListener('DOMContentLoaded', () => {
     audioElement.addEventListener('ended', () => {
         waitForAnimation(document.getElementById("light2"),"swing","swingoutro");
         waitForAnimation(document.getElementById("light1"),"swing_small","swingoutro_small");
+    });
+
+    // Event listener for captions file upload
+    captionUpload.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    captions = JSON.parse(e.target.result);
+                } catch (error) {
+                    console.error('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        }
     });
 });
 
@@ -218,7 +264,7 @@ function waitForAnimation2(element, callback) {
 const delay = 1500;
 const move_windows_check = document.getElementById("move_windows");
 
-function createMiscWindow(containerElement) {
+function createMiscWindow(containerElement, caption=false) {
     // Create the div element
     const miscWindow = document.createElement('div');
     
@@ -247,12 +293,20 @@ function createMiscWindow(containerElement) {
     miscWindow.style.animationDelay = Math.random()+"s";
     miscWindow.style.animationDuration = (3 + Math.random())+"s";
 
-    // Create the img element
-    const imgElement = document.createElement('img');
-    imgElement.src = 'images/visualizer.gif'; // Image source
-    
-    // Append the img element to the div
-    miscWindow.appendChild(imgElement);
+    if (!caption){
+        // Create the img element
+        const imgElement = document.createElement('img');
+        imgElement.src = 'images/visualizer.gif'; // Image source
+        
+        // Append the img element to the div
+        miscWindow.appendChild(imgElement);
+    } else {
+        const captionElement = document.createElement('div');
+
+        captionElement.classList.add("caption");
+
+        miscWindow.appendChild(captionElement);
+    }
     
     // Append the div to the container
     containerElement.appendChild(miscWindow);
@@ -277,22 +331,24 @@ function createMiscWindow(containerElement) {
 const container = document.getElementById('miscarea1');
 const amount_windows = 10;
 for (let n = 0; n<amount_windows; n++){
-    createMiscWindow(container);
+    createMiscWindow(container, (n>amount_windows/2));
 }
 
 const container2 = document.getElementById('miscarea2');
 const amount_windows2 = 5;
 for (let n = 0; n<amount_windows2; n++){
-    createMiscWindow(container2);
+    createMiscWindow(container2, (n>=3));
 }
 
 
 document.getElementById('audioFileInput').addEventListener('change', function(event) {
     const audioElement = document.getElementById('audio');
+    const nowPlayingElement = document.getElementById('now_playing_editable');
     const file = event.target.files[0];
     if (file) {
         const objectURL = URL.createObjectURL(file);
         audioElement.src = objectURL;
         // audioElement.play();
+        nowPlayingElement.textContent = 'Now playing:\n' + file.name;
     }
 });

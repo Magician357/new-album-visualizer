@@ -24,7 +24,7 @@
         <div id="miscarea1"></div>
         <div id="miscarea2">
             <div class="miscwindow" id="now_playing">
-                <div contenteditable="true">
+                <div contenteditable="true" id="now_playing_editable">
                     Now playing:
                     EDIT ME
                 </div>
@@ -35,8 +35,10 @@
         <source src="audio/placeholder.wav" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
-    <br>
+    <br><p class="filelabel">Audio upload</p>
     <input type="file" id="audioFileInput" accept="audio/*">
+    <br><p class="filelabel">Caption upload (see <a href="/audio/captions/placeholder.json">audio/captions/placeholder.json</a>)</p>
+    <input type="file" id="captionUpload" accept=".json">
     <div id="settings">
         <input type="checkbox" id="lights_intro"  onclick="toggle_animation_lights()">
         <label for="lights_intro">Lights intro</label>
