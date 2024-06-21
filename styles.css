@@ -1,0 +1,83 @@
+body {
+    margin: 0;
+    height: 100vh;
+    background-color: black;
+}
+
+.outlined-div, #waveform {
+    width: 1920px;
+    height: 1080px;
+    background-color: white;
+    position: fixed;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    overflow: hidden;
+}
+
+#person {
+    position: fixed;
+    width: 350px;
+    height: 600px;
+    transform: translateX(-50%);
+    bottom: calc(50% - 540px);
+    left: 50%;
+    background-image: url(images/window\ 1.gif);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    animation: bob_person 4s ease-in-out infinite;
+    box-shadow: 0 0 10px 10px white;
+}
+
+#seated {
+    width: 275px;
+    height: 510px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: 4px solid rgb(236, 236, 236);
+    border-radius: 4px;
+}
+
+#seated img {
+    transform: scale(1.4);
+}
+
+@keyframes bob_person {
+    0%, 100% {
+        transform: translateY(0) translateX(-50%);
+    }
+    50% {
+        transform: translateY(-10px) translateX(-50%);
+    }
+}
+
+#player {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: bob_person 4s ease-in-out infinite;
+    animation-delay: 500ms;
+    top: calc(50% + 60px);
+    width: 180px;
+    height: 120px;
+    background-image: url(images/window\ 2.gif);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#waveform2 {
+    width: 140px;
+    height: 70px;
+    margin-top: 20px;
+    /* background-color: #f3f3f3; */
+}
+
+#waveform canvas {
+    filter: blur(5px);
+    z-index: -1;
+}
