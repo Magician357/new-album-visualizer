@@ -10,6 +10,33 @@ function toggle_animation_lights(){
     }
 }
 
+function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+        var context = this, args = arguments;
+        var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+}
+
+function check_size(){
+    var viewportWidth = window.innerWidth;
+    var viewportHeight = window.innerHeight;
+
+    if (viewportWidth < 1920 || viewportHeight < 1400) {
+        alert('Your viewport does not meet the recommended dimensions (Width: 1920px, Height: 1400px). You may need to zoom out to view the whole thing, or resize your viewport.');
+    }
+}
+
+check_size();
+window.addEventListener('resize', debounce(check_size,250));
+
 document.addEventListener('DOMContentLoaded', () => {
     const audioElement = document.getElementById('audio');
     const canvas = document.createElement('canvas');
