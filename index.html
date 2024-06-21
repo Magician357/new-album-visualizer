@@ -35,12 +35,16 @@
         <source src="audio/placeholder.wav" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+    <br>
+    <input type="file" id="audioFileInput" accept="audio/*">
     <div id="settings">
         <input type="checkbox" id="lights_intro"  onclick="toggle_animation_lights()">
         <label for="lights_intro">Lights intro</label>
         <input type="checkbox" id="move_windows" checked>
         <label for="move_windows">move small windows</label>
-        <br><p>Note: please dont play and/or pause the song too much when lights intro is on, just let it play or wait a lil after stopping</p>
+        <br><button onclick="introAnimation(document.getElementById('light2'),'swingintro','swing 2.5s infinite ease-in-out',true);introAnimation(document.getElementById('light1'),'swingintro_small','swing_small 1s infinite ease-in-out',true);">Start</button>
+        <button onclick="waitForAnimation(document.getElementById('light2'),'swing','swingoutro',2.5,1,true);waitForAnimation(document.getElementById('light1'),'swing_small','swingoutro_small',2.5,1,true);">Stop</button>
+        <br><p>Note: please dont play and/or pause the song too much when lights intro is on, just let it play or wait a lil after stopping. Also dont stop or start the song too fast manually</p>
     </div>
     <script src="script.js"></script>
 </body>

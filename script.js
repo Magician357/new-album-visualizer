@@ -134,10 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function waitForAnimation(element, introAnimation, outroAnimation, new_duration=2.5, new_iteration = 1) {
-    if (!lights_intro.checked) {return}
+function waitForAnimation(element, introAnimation, outroAnimation, new_duration=2.5, new_iteration = 1, overide=false) {
+    console.log(overide);
+    if (!lights_intro.checked && !overide) {console.log("disabled");return}
     console.log("waiting");
-    var animationCount = 0;
+    let animationCount = 0;
 
     // Add event listener for animationiteration event
     element.addEventListener('animationiteration', function animationIterationHandler(event) {
@@ -170,8 +171,8 @@ function waitForAnimation(element, introAnimation, outroAnimation, new_duration=
 }
 
 
-async function introAnimation(element, intro_animation, loop_animation){
-    if (!lights_intro.checked) {return}
+async function introAnimation(element, intro_animation, loop_animation, overide=false){
+    if (!lights_intro.checked && !overide) {return}
     console.log("playing intro animation");
     
     waitForAnimation2(element, () => {
@@ -284,3 +285,14 @@ const amount_windows2 = 5;
 for (let n = 0; n<amount_windows2; n++){
     createMiscWindow(container2);
 }
+
+
+document.getElementById('audioFileInput').addEventListener('change', function(event) {
+    const audioElement = document.getElementById('audio');
+    const file = event.target.files[0];
+    if (file) {
+        const objectURL = URL.createObjectURL(file);
+        audioElement.src = objectURL;
+        // audioElement.play();
+    }
+});
