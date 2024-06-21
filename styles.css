@@ -124,13 +124,13 @@ body {
 
 #light1 {
     left: calc(20% - 75px);
-    animation: none 1s infinite ease-in-out;
+    animation: swing_small 1s infinite ease-in-out;
     transform-origin: top center;
 }
 
 #light2 {
     right: calc(20%);
-    animation: none 2.5s infinite ease-in-out;
+    animation: swing 2.5s infinite ease-in-out;
     transform-origin: top center;
 }
 
