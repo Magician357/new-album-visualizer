@@ -126,9 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         captionDivs.forEach(div => {
             if (currentCaption) {
-                div.innerText = currentCaption.text;
+                if (currentCaption.hasOwnProperty("text2") && div.dataset.captiontype==="true"){
+                    div.innerHTML = currentCaption.text2;
+                } else div.innerHTML = currentCaption.text;
             } else {
-                div.innerText = '';
+                div.innerHTML = '';
             }
         });
     }
@@ -264,7 +266,7 @@ function waitForAnimation2(element, callback) {
 const delay = 1500;
 const move_windows_check = document.getElementById("move_windows");
 
-function createMiscWindow(containerElement, caption=false) {
+function createMiscWindow(containerElement, caption=false,caption2=false) {
     // Create the div element
     const miscWindow = document.createElement('div');
     
@@ -305,6 +307,7 @@ function createMiscWindow(containerElement, caption=false) {
 
         captionElement.classList.add("caption");
 
+        captionElement.dataset.captiontype=caption2;
         miscWindow.appendChild(captionElement);
     }
     
@@ -331,7 +334,7 @@ function createMiscWindow(containerElement, caption=false) {
 const container = document.getElementById('miscarea1');
 const amount_windows = 10;
 for (let n = 0; n<amount_windows; n++){
-    createMiscWindow(container, (n>amount_windows/2));
+    createMiscWindow(container, (n>amount_windows/2), (n>amount_windows*0.75));
 }
 
 const container2 = document.getElementById('miscarea2');

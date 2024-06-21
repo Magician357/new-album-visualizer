@@ -219,11 +219,15 @@ body {
     font-family: "Space Mono", monospace;
     font-weight: 400;
     font-style: normal;
-    font-size: small;
+    font-size: 10px;
     width: 120px;
     height: 90px;
     /* border: 1px solid black; */
     margin-top: 40px;
+}
+
+#now_playing_editable {
+    font-size: small;
 }
 
 #now_playing.miscwindow {
