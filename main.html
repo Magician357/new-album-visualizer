@@ -17,11 +17,30 @@
         <div id="player">
             <div id="waveform2"></div>
         </div>
+        <div class="light" id="light1"></div>
+        <div class="light" id="light2"></div>
+        <div class="light_window" id="window1"></div>
+        <div class="light_window" id="window2"></div>
+        <div id="miscarea1"></div>
+        <div id="miscarea2">
+            <div class="miscwindow" id="now_playing">
+                <div contenteditable="true">
+                    Now playing:
+                    EDIT ME
+                </div>
+            </div>
+        </div>
     </div>
     <audio id="audio" controls>
         <source src="audio/placeholder.wav" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+    <div id="settings">
+        <input type="checkbox" id="lights_intro"  onclick="toggle_animation_lights()" checked>
+        <label for="lights_intro">Lights intro</label>
+        <input type="checkbox" id="move_windows" checked>
+        <label for="move_windows">move small windows</label>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,3 +1,15 @@
+const lights_intro = document.getElementById("lights_intro");
+
+function toggle_animation_lights(){
+    if (lights_intro.checked) {
+        document.getElementById("light1").style.animation="none 1s infinite ease-in-out";
+        document.getElementById("light2").style.animation="none 2.5s infinite ease-in-out";
+    } else {
+        document.getElementById("light1").style.animation="swing_small 1s infinite ease-in-out";
+        document.getElementById("light2").style.animation="swing 2.5s infinite ease-in-out";
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const audioElement = document.getElementById('audio');
     const canvas = document.createElement('canvas');
@@ -80,5 +92,168 @@ document.addEventListener('DOMContentLoaded', () => {
         audioCtx.resume().then(() => {
             draw();
         });
+        introAnimation(document.getElementById("light2"),"swingintro","swing 2.5s infinite ease-in-out");
+        introAnimation(document.getElementById("light1"),"swingintro_small","swing_small 1s infinite ease-in-out");
+    });
+
+    audioElement.addEventListener('pause', () => {
+        waitForAnimation(document.getElementById("light2"),"swing","swingoutro");
+        waitForAnimation(document.getElementById("light1"),"swing_small","swingoutro_small");
+    });
+
+    audioElement.addEventListener('ended', () => {
+        waitForAnimation(document.getElementById("light2"),"swing","swingoutro");
+        waitForAnimation(document.getElementById("light1"),"swing_small","swingoutro_small");
     });
 });
+
+function waitForAnimation(element, introAnimation, outroAnimation, new_duration=2.5, new_iteration = 1) {
+    if (!lights_intro.checked) {return}
+    console.log("waiting");
+    var animationCount = 0;
+
+    // Add event listener for animationiteration event
+    element.addEventListener('animationiteration', function animationIterationHandler(event) {
+        console.log('animation ended');
+        console.log(event.animationName);
+        console.log(introAnimation);
+        console.log(event.animationName == introAnimation);
+        // Check if the animation that iterated is the introAnimation
+        if (event.animationName === introAnimation) {
+            animationCount++;
+            
+            // If the animation has iterated more than once, trigger outro animation
+            if (animationCount >= 1) {
+                // Remove the event listener to prevent multiple executions
+                element.removeEventListener('animationiteration', animationIterationHandler);
+                
+                // Trigger the outro animation
+                element.style.animationName = outroAnimation;
+                element.style["-webkit-animation-duration"] = new_duration + "s";
+                element.style.animationIterationCount = new_iteration;
+
+                // Add event listener for animationend event of the outro animation
+                element.addEventListener('animationend', function animationEndHandler() {
+                    // Remove the animation styles after the outro animation finishes
+                    element.style.animation = 'none';
+                }, {once: true});
+            }
+        }
+    });
+}
+
+
+async function introAnimation(element, intro_animation, loop_animation){
+    if (!lights_intro.checked) {return}
+    console.log("playing intro animation");
+    
+    waitForAnimation2(element, () => {
+        element.style.animationName = intro_animation;
+        element.style["-webkit-animation-duration"] = "2.5s";
+        element.style.animationIterationCount = 1;
+
+        element.addEventListener('animationend', function animationEndHandler(event) {
+            // Remove the event listener to prevent multiple executions
+            element.removeEventListener('animationend', animationEndHandler);
+            
+            // Trigger the looping animation
+            element.style.animation = loop_animation;
+        });
+    });
+}
+
+function waitForAnimation2(element, callback) {
+    // Check if the element has any active animations
+    var computedStyle = window.getComputedStyle(element);
+    var isAnimated = computedStyle.animationName !== 'none';
+    // If no animations, execute the callback immediately
+    if (!isAnimated) {
+        console.log("animation not playing");
+        callback();
+        return;
+    }
+    console.log("animation playing");
+    console.log(computedStyle.animationName);
+
+    // Function to handle animation end
+    function onAnimationEnd() {
+        // Remove the event listener
+        element.removeEventListener('animationend', onAnimationEnd);
+        // Call the callback function
+        callback();
+    }
+
+    // Add event listeners for transition end and animation end
+    element.addEventListener('animationend', onAnimationEnd);
+}
+
+const delay = 1500;
+const move_windows_check = document.getElementById("move_windows");
+
+function createMiscWindow(containerElement) {
+    // Create the div element
+    const miscWindow = document.createElement('div');
+    
+    // Add class "miscwindow" to the div
+    miscWindow.classList.add('miscwindow');
+    
+    // Calculate random positions within the container
+    const containerWidth = containerElement.offsetWidth - miscWindow.offsetWidth;
+    const containerHeight = containerElement.offsetHeight - miscWindow.offsetHeight;
+    const centerX = containerElement.offsetWidth / 2;
+    const centerY = containerElement.offsetHeight / 2;
+
+    // Adjust the bias factor to control how clumped the images are towards the center
+    const biasFactor = 0.7; // Increase for more clumping, decrease for less
+    
+    const randomX = centerX + Math.floor((Math.random() - 0.5) * containerWidth * biasFactor);
+    const randomY = centerY + Math.floor((Math.random() - 0.5) * containerHeight * biasFactor);
+    
+    // Set the position
+    miscWindow.style.left = randomX + 'px';
+    miscWindow.style.top = randomY + 'px';
+
+    const randomImageIndex = Math.floor(Math.random() * 3);
+    miscWindow.style.backgroundImage = `url(images/window\\ 3//${randomImageIndex.toString().padStart(3, '0')}.png)`;
+
+    miscWindow.style.animationDelay = Math.random()+"s";
+    miscWindow.style.animationDuration = (3 + Math.random())+"s";
+
+    // Create the img element
+    const imgElement = document.createElement('img');
+    imgElement.src = 'images/visualizer.gif'; // Image source
+    
+    // Append the img element to the div
+    miscWindow.appendChild(imgElement);
+    
+    // Append the div to the container
+    containerElement.appendChild(miscWindow);
+
+    function move(){
+        const randomX = centerX + Math.floor((Math.random() - 0.5) * containerWidth * biasFactor);
+        const randomY = centerY + Math.floor((Math.random() - 0.5) * containerHeight * biasFactor);
+        miscWindow.style.left = randomX + 'px';
+        miscWindow.style.top = randomY + 'px';
+        wait()
+    }
+
+    function wait(){
+        setTimeout((move_windows_check.checked) ? move : wait, delay+(Math.random()*500));
+    }
+
+    move();
+}
+
+// Example usage:
+// Assuming you have a div with id "container" as the area where the window will be positioned
+const container = document.getElementById('miscarea1');
+const amount_windows = 10;
+for (let n = 0; n<amount_windows; n++){
+    createMiscWindow(container);
+}
+
+const container2 = document.getElementById('miscarea2');
+const amount_windows2 = 5;
+for (let n = 0; n<amount_windows2; n++){
+    createMiscWindow(container2);
+}
