@@ -95,6 +95,14 @@ body {
     transform: translateX(-50%);
 }
 
+.light_window::before{
+    content:"Light.jpg";
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 7px;
+    position: absolute;
+    transform: translate(20px,4px) scaleX(2) scaleY(1.1);
+}
+
 @keyframes bob_small {
     0%, 100% {
         transform: translateY(2px) translateX(-50%);
@@ -266,4 +274,13 @@ input::file-selector-button,p.filelabel{
 
 p.filelabel{
     color:white;
+}
+
+#windowname{
+    z-index: 100;
+    position:absolute;
+    top:3px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    transform: translateX(-55px) scaleY(1.4) scaleX(1.1);
 }
