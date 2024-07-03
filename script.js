@@ -23,7 +23,7 @@ function check_size(){
 }
 
 check_size();
-window.addEventListener('resize', debounce(check_size,250));
+// window.addEventListener('resize', debounce(check_size,250));
 
 // var captions = [];
     
@@ -94,47 +94,114 @@ function loadImages(folder, frameCount) {
     return images;
 }
 
-var frame_count=0
-function draw_window_test(){
-    ctx.drawImage(test_window[Math.floor(frame_count/18)%3],50,50);
-    frame_count++;
+function squareWave(t, period=2) {
+    return Math.floor(t / period) % 2;
 }
 
-const test_window=loadImages("images/window 3/",3)
+function smoothstep(x) {
+    return x * x * (3 - 2 * x); // Smoothstep function between 0 and 1
+}
 
-function draw_visualizer() {
+function cyclicSmoothstep(t) {
+    return (2 * smoothstep((t / 2) % 1) - 1)*(2*squareWave(t)-1);
+}
 
+function bob(cur_frame){
+    // returns [x, y] translation
+    return [0, 4 * Math.sin(cur_frame / 30) - 2];
+}
+
+function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors=false,animation_function=(cur_frame)=>[0,0],delay=0,timeshift=1){
+    this.images = loadImages(folder,frameCount);
+    this.curX = x;
+    this.curY = y;
+    this.width=width; this.height = height;
+    this.frameDuration = frameDuration;
+    this.frameCount=frameCount;
+    this.invertColors=invertColors;
+
+    this.draw = (cur_frame) => {
+        let [mX, mY] = animation_function((cur_frame*timeshift)+delay);
+        let img = this.images[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
+    
+        // Clear the area before drawing
+        if (this.invertColors) ctx.clearRect(this.curX + mX , this.curY + mY - 5, this.width, this.height+10);
+    
+        // Draw the image on the canvas
+        ctx.drawImage(img, this.curX + mX, this.curY + mY, this.width, this.height);
+    
+        if (this.invertColors) {
+            // Get the image data from the canvas
+            let imageData = ctx.getImageData(this.curX + mX, this.curY + mY, this.width, this.height);
+            let data = imageData.data;
+    
+            // Invert the colors while preserving the alpha channel
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 255 - data[i];       // Red
+                data[i + 1] = 255 - data[i + 1]; // Green
+                data[i + 2] = 255 - data[i + 2]; // Blue
+                // Alpha (data[i + 3]) remains unchanged
+            }
+    
+            // Put the modified image data back on the canvas
+            ctx.putImageData(imageData, this.curX + mX, this.curY + mY);
+        }
+    }
+
+    this.moveTo= (newX,newY) =>{
+        this.curX = newX;
+        this.curY = newY;
+    }
+}
+
+function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.height) {
     analyser.getByteTimeDomainData(dataArray);
 
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'white';
     ctx.beginPath();
 
-    const sliceWidth = canvas.width * 1.0 / bufferLength;
-    let x = 0;
+    const sliceWidth = width * 1.0 / bufferLength;
+    let xPos = x;
 
     for (let i = 0; i < bufferLength; i++) {
         const v = dataArray[i] / 128.0;
-        const y = v * canvas.height / 2;
+        const yPos = y + (v * height / 2);
 
         if (i === 0) {
-            ctx.moveTo(x, y);
+            ctx.moveTo(xPos, yPos);
         } else {
-            ctx.lineTo(x, y);
+            ctx.lineTo(xPos, yPos);
         }
 
-        x += sliceWidth;
+        xPos += sliceWidth;
     }
 
-    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.lineTo(x + width, y + height / 2);
     ctx.stroke();
 }
 
+
+var mainWindow = new drawn_gif("images/window 1",4,48,785,450,350,600,true,bob);
+
+var inImage = new Image();
+inImage.src="images/person.png";
+function draw_mainWindow(cur_frame){
+    mainWindow.draw(cur_frame);
+    let [tX,tY]=bob(cur_frame+3);
+    ctx.drawImage(inImage,822.5+tX,505+tY,275,510);
+}
+
+var small_visualizer = new drawn_gif("images/window 2",3,110,870,580,180,120,false,bob,7,0.95);
+
+var cur_frame = 0
 function animate() {
     requestAnimationFrame(animate);
+    cur_frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_visualizer();
-    draw_window_test();
+    draw_mainWindow(cur_frame);
+    small_visualizer.draw(cur_frame);
 }
 
 
@@ -143,5 +210,6 @@ audio.onplay = () => {
     if (audioContext.state === 'suspended') {
         audioContext.resume();
     }
-    animate();
 };
+
+animate();
