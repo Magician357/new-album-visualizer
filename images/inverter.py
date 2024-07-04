@@ -29,7 +29,7 @@ def process_images_in_folder(folder_path):
             print(f"Inverted {filename}")
 
 # Folder containing images
-folder_path = 'D:\\programs\\new-album-visualizer\\images\\window 3'
+folder_path = 'D:\\programs\\new-album-visualizer\\images\\window 1'
 
 # Process images in the specified folder
 process_images_in_folder(folder_path)

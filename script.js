@@ -62,6 +62,7 @@ document.getElementById('audioFileInput').addEventListener('change', function(ev
         audioElement.src = objectURL;
         // audioElement.play();
         // nowPlayingElement.textContent = 'Now playing:\n' + file.name;
+        playing_text=file.name;
     }
 });
 
@@ -190,7 +191,7 @@ function bob_small(cur_frame){
     return [bob(cur_frame*0.45)[1]*0.8,bob((cur_frame*.95)+7)[1]]
 }
 
-var mainWindow = new drawn_gif("images/window 1",4,48,785,450,350,600,true,bob);
+var mainWindow = new drawn_gif("images/window 1",4,48,785,450,350,600,false,bob);
 
 var inImage = new Image();
 inImage.src="images/person.png";
@@ -254,6 +255,10 @@ function path_b(t,a){
     return Math.cos(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.cos(t * 0.9 + a * 0.5)) + (0.1 * Math.sin(5 * t + 0.7 * a));
 }
 
+function path_c(t,a){
+    return Math.sin(t+a) + (0.5 * Math.cos(t * 0.5 + a)) + (0.6 * Math.sin(t * 0.9 + a * 0.7));
+}
+
 function getRandomOrder(n) {
     // Create an array of numbers from 0 to n-1
     let array = [];
@@ -300,17 +305,57 @@ function draw_windows(cur_frame,path=path_a,speed=4,height=700,spacing=200) {
     }
 }
 
+const third_width = canvasWidth / 3;
 
+function draw_text_window(cur_frame) {
+    for (let i = 0; i <= 2; i++) {
+        let x = ((cur_frame * 4 + third_width * i) % canvasWidth) - 200;
+        let y = 725 + path_c(x * 0.01, cur_frame * 0.01) * 10;
+        moving_window.draw(cur_frame, x, y);
 
+        ctx.fillStyle = "white";
+        ctx.font = "15px monospace";
+        ctx.fillText("Now playing:", x + 20, y + 70);
+        ctx.font = "12px monospace";
+
+        if (playing_text.length > 20) {
+            // Split text at the closest whitespace to the middle
+            let mid = Math.floor(playing_text.length / 2);
+            let before = playing_text.lastIndexOf(' ', mid);
+            let after = playing_text.indexOf(' ', mid + 1);
+            let splitIndex = before !== -1 ? before : after;
+
+            if (splitIndex !== -1) {
+                let line1 = playing_text.substring(0, splitIndex);
+                let line2 = playing_text.substring(splitIndex + 1);
+
+                ctx.fillText(line1, x + 20, y + 90);
+                ctx.fillText(line2, x + 20, y + 105);
+            } else {
+                // If no whitespace found, fall back to breaking at the middle
+                let line1 = playing_text.substring(0, mid);
+                let line2 = playing_text.substring(mid);
+
+                ctx.fillText(line1, x + 20, y + 90);
+                ctx.fillText(line2, x + 20, y + 105);
+            }
+        } else {
+            ctx.fillText(playing_text, x + 20, y + 90);
+        }
+    }
+}
 
 var cur_frame = 0
+var playing_text = "placeholder.wav";
+
 function animate() {
     requestAnimationFrame(animate);
     cur_frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    draw_visualizer();
     draw_windows(cur_frame);
     draw_windows(cur_frame,path_b,5,750,210);
+    draw_visualizer();
+    draw_text_window(cur_frame)
     draw_mainWindow(cur_frame);
     small_visualizer.draw(cur_frame);
     draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black");
