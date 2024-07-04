@@ -237,12 +237,80 @@ function draw_lights(cur_frame) {
 // 4. then, move the gifs to those locations and draw, and repeat for all
 //    should work cause updating the position after drawing does nothing
 
+const side_bob = (cur_frame)=>[bob(cur_frame)[1],0];
+
+var moving_window = new drawn_gif("images/window 3",3,38,0,0,150,150,false);
+var moving_gif = new drawn_gif("images/visualizer",9,10,0,0,75,75,false);
+
+function path_a(t,a){
+    // t is how far along
+    // a is the timeshift
+    return Math.sin(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.sin(t * 0.9 + a * 0.5)) + (0.05 * Math.sin(5 * t + 0.7 * a));
+}
+
+function path_b(t,a){
+    // t is how far along
+    // a is the timeshift
+    return Math.cos(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.cos(t * 0.9 + a * 0.5)) + (0.1 * Math.sin(5 * t + 0.7 * a));
+}
+
+function getRandomOrder(n) {
+    // Create an array of numbers from 0 to n-1
+    let array = [];
+    for (let i = 0; i < n; i++) {
+        array.push(i);
+    }
+
+    // Shuffle the array using the Fisher-Yates algorithm
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+
+    return array;
+}
+
+const canvasWidth = 2120;
+const order = getRandomOrder(10);
+
+function draw_windows(cur_frame,path=path_a,speed=4,height=700,spacing=200) {
+    // Calculate the new positions
+    let positions = [];
+    let num_positions = 10; // Fewer positions for more spacing
+
+    for (let i = 0; i < num_positions; i++) {
+        let t = cur_frame*0.1 + i; // Larger step to space them out more
+        let a = cur_frame * 0.01;    // Timeshift
+        let x = (cur_frame * speed + i * spacing) % canvasWidth; // Move to the right with more spacing and wrap around
+        let y = height + path(t + Math.PI / 2, a) * 50; // Centered around 300 with amplitude scaling
+        positions.push([x-200, y]);
+    }
+
+    // Draw the moving_window and moving_gif at each position
+    for (let i = 0; i < order.length; i++) {
+        let [x, y] = positions[order[i]];
+
+        // Move and draw the moving_window
+        // moving_window.moveTo(x, y);
+        moving_window.draw(cur_frame+i*6,x,y);
+
+        // Move and draw the moving_gif
+        // moving_gif.moveTo(x+36, y+55);
+        moving_gif.draw(cur_frame+i,x+36, y+55);
+    }
+}
+
+
+
+
 var cur_frame = 0
 function animate() {
     requestAnimationFrame(animate);
     cur_frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_visualizer();
+    draw_windows(cur_frame);
+    draw_windows(cur_frame,path_b,5,750,210);
     draw_mainWindow(cur_frame);
     small_visualizer.draw(cur_frame);
     draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black");
