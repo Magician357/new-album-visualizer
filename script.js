@@ -111,6 +111,10 @@ function bob(cur_frame){
     return [0, 4 * Math.sin(cur_frame / 30) - 2];
 }
 
+function bob_light(cur_frame){
+    return [0,3*Math.sin(cur_frame/30)-1.5];
+}
+
 function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors=false,animation_function=(cur_frame)=>[0,0],delay=0,timeshift=1){
     this.images = loadImages(folder,frameCount);
     this.curX = x;
@@ -120,19 +124,19 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     this.frameCount=frameCount;
     this.invertColors=invertColors;
 
-    this.draw = (cur_frame) => {
+    this.draw = (cur_frame,curX=this.curX,curY=this.curY) => {
         let [mX, mY] = animation_function((cur_frame*timeshift)+delay);
         let img = this.images[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
     
         // Clear the area before drawing
-        if (this.invertColors) ctx.clearRect(this.curX + mX , this.curY + mY - 5, this.width, this.height+10);
+        if (this.invertColors) ctx.clearRect(curX + mX , curY + mY, this.width, this.height);
     
         // Draw the image on the canvas
-        ctx.drawImage(img, this.curX + mX, this.curY + mY, this.width, this.height);
+        ctx.drawImage(img, curX + mX, curY + mY, this.width, this.height);
     
         if (this.invertColors) {
             // Get the image data from the canvas
-            let imageData = ctx.getImageData(this.curX + mX, this.curY + mY, this.width, this.height);
+            let imageData = ctx.getImageData(curX + mX, curY + mY, this.width, this.height);
             let data = imageData.data;
     
             // Invert the colors while preserving the alpha channel
@@ -144,7 +148,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
             }
     
             // Put the modified image data back on the canvas
-            ctx.putImageData(imageData, this.curX + mX, this.curY + mY);
+            ctx.putImageData(imageData, curX + mX, curY + mY);
         }
     }
 
@@ -154,11 +158,11 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     }
 }
 
-function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.height) {
+function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.height,color="white") {
     analyser.getByteTimeDomainData(dataArray);
 
     ctx.lineWidth = 3;
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = color;
     ctx.beginPath();
 
     const sliceWidth = width * 1.0 / bufferLength;
@@ -182,6 +186,10 @@ function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.hei
 }
 
 
+function bob_small(cur_frame){
+    return [bob(cur_frame*0.45)[1]*0.8,bob((cur_frame*.95)+7)[1]]
+}
+
 var mainWindow = new drawn_gif("images/window 1",4,48,785,450,350,600,true,bob);
 
 var inImage = new Image();
@@ -192,7 +200,42 @@ function draw_mainWindow(cur_frame){
     ctx.drawImage(inImage,822.5+tX,505+tY,275,510);
 }
 
-var small_visualizer = new drawn_gif("images/window 2",3,110,870,580,180,120,false,bob,7,0.95);
+var small_visualizer = new drawn_gif("images/window 2",3,110,870,580,180,120,false,bob_small);
+
+
+var light_hanging = new Image(); 
+light_hanging.src = 'images/lightbulb.png';
+
+const spacing = 145;
+const width = 150;
+const height = 350;
+var light_window = new drawn_gif("images/light window", 5, 120, 0, 180, width, width, true, bob_light); 
+
+function draw_lights(cur_frame) {
+    for (let n = spacing; n < 1920 - spacing; n = n + spacing + width) {
+        let x = n;
+        let y = 0;
+        if (((n-spacing) / (spacing + width)) === 4) { // Check if it is the fifth light
+            let swing_angle = Math.sin(cur_frame * 0.05) * Math.PI / 8; // Calculate the swing angle
+            ctx.save(); // Save the current state of the canvas
+            ctx.translate(x + width / 2, y); // Move the canvas origin to the top middle of the light
+            ctx.rotate(swing_angle); // Rotate the canvas by the swing angle
+            ctx.drawImage(light_hanging, -width / 2, 0); // Draw the light at the new origin
+            ctx.restore(); // Restore the original state of the canvas
+        } else {
+            ctx.drawImage(light_hanging, x, y); // Draw the light normally
+        }
+        light_window.draw(cur_frame + n / spacing, x);
+    }
+}
+
+// how to make the stream thing
+// 1. create the two gifs
+// 2. create a function that dictates the path, taking in one number and outputting the position allong it
+//    this path should move, eg like the sum of sine waves with diffrent moving phases
+// 3. every frame, generate a lot of positions
+// 4. then, move the gifs to those locations and draw, and repeat for all
+//    should work cause updating the position after drawing does nothing
 
 var cur_frame = 0
 function animate() {
@@ -202,6 +245,8 @@ function animate() {
     draw_visualizer();
     draw_mainWindow(cur_frame);
     small_visualizer.draw(cur_frame);
+    draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black");
+    draw_lights(cur_frame);
 }
 
 
