@@ -1,60 +1,4 @@
-function debounce(func, wait, immediate) {
-    var timeout;
-    return function() {
-        var context = this, args = arguments;
-        var later = function() {
-            timeout = null;
-            if (!immediate) func.apply(context, args);
-        };
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
-    };
-}
-
-function check_size(){
-    var viewportWidth = window.innerWidth;
-    var viewportHeight = window.innerHeight;
-
-    if (viewportWidth < 1920 || viewportHeight < 1400) {
-        alert('Your viewport does not meet the recommended dimensions (Width: 1920px, Height: 1400px). You may need to zoom out to view the whole thing, or resize your viewport.');
-    }
-}
-
-check_size();
-// window.addEventListener('resize', debounce(check_size,250));
-
-// var captions = [];
-    
-//     // Fetch captions from JSON file when the page loads
-//     window.addEventListener('load', () => {
-//         fetch('audio/captions/placeholder.json')
-//             .then(response => response.json())
-//             .then(data => {
-//                 captions = data;
-//             })
-//             .catch(error => console.error('Error loading captions:', error));
-//     });
-
-//     const updateCaptions = () => {
-//         const {currentTime} = audioElement;
-
-//         const currentCaption = captions.find(caption => currentTime >= caption.start && currentTime < caption.end);
-
-//         captionDivs.forEach(div => {
-//             if (currentCaption) {
-//                 if (currentCaption.hasOwnProperty("text2") && div.dataset.captiontype==="true"){
-//                     div.innerHTML = currentCaption.text2;
-//                 } else div.innerHTML = currentCaption.text;
-//             } else {
-//                 div.innerHTML = '';
-//             }
-//         });
-//     }
-
 document.getElementById('audioFileInput').addEventListener('change', async function(event) {
-    // const nowPlayingElement = document.getElementById('now_playing_editable');
     const file = event.target.files[0];
     if (file) {
         // Stop any ongoing recording
@@ -64,13 +8,12 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
 
         const objectURL = URL.createObjectURL(file);
         audio.src = objectURL;
-        //audioElement.play();
-        //nowPlayingElement.textContent = 'Now playing:\n' + file.name;
         playing_text = file.name;
         render_text();
         
         // Wait for audio element to be ready
-        // await audioElement.play();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await audio.play();
 
         // Capture audio stream from the audio element
         audioStream = audio.captureStream();
@@ -338,8 +281,13 @@ function draw_mainWindow(cur_frame){
 var small_visualizer = new drawn_gif("images/window 2",3,110,870,580,180,120,false,bob_small);
 
 
-var light_hanging = new Image(); 
-light_hanging.src = 'images/lightbulb.png';
+let light_hanging_img = new Image(); 
+light_hanging_img.src = 'images/lightbulb.png';
+var light_hanging;
+light_hanging_img.onload = () => {
+    light_hanging = new OffscreenCanvas(light_hanging_img.width,light_hanging_img.height);
+    light_hanging.getContext("2d").drawImage(light_hanging_img,0,0);
+}
 
 const spacing = 145;
 const width = 150;
@@ -495,22 +443,11 @@ function draw_text_window(cur_frame) {
 // const width = ctx.canvas.width;
 // const height = ctx.canvas.height;
 
-var gradients = [];
-for (let i = 0; i < 10; i++) {
-    // Random angle for each gradient
-    let angle = Math.random() * 360;
-    // Create a gradient object with properties
-    gradients.push({
-        angle: angle,
-        x: Math.random() * 1920,  // Random initial position
-        y: Math.random() * 1080,
-        speed: Math.random() * 2 + 1,  // Random speed for movement
-        color1: `rgba(0, 0, 0, ${Math.random() * 0.2 + 0.1})`,  // Dark colors with low opacity
-        color2: `rgba(0, 0, 0, ${Math.random() * 0.2 + 0.1})`
-    });
-}
-
-const background_images = loadImages("images/blurred_images",5);
+const background_images_pre = loadImages("images/blurred_images",5);
+var background_images = [];
+background_images_pre.forEach((img) => img.onload= () => {
+    let cur_canvas= new OffscreenCanvas(2500,2500);cur_canvas.getContext("2d").drawImage(img,0,0); background_images.push(img);
+});
 const background_move = [
     (t) => [Math.cos(t)*100,Math.sin(t)*100],
     (t) => [Math.cos(t/3)*100,Math.sin(t/3)*100],
