@@ -10,7 +10,7 @@ body {
     width: 1920px;
     height: 1080px;
     background-color: black;
-    position: fixed;
+    position: absolute;
     transform: translate(-50%, -50%);
     top: 50%;
     left: 50%;
@@ -25,4 +25,10 @@ input::file-selector-button,p.filelabel{
 
 p.filelabel{
     color:white;
+}
+
+video {
+    position:absolute;
+    top: 1500px;
+    left: 40px;
 }

@@ -16,6 +16,11 @@
     <input type="file" id="audioFileInput" accept="audio/*">
     <p style="color:white">current fps: <p id="fps" style="color:white"></p></p>
     <button onclick="restart();">restart</button>
+    <div id="recording">
+        <button onclick="start_recording()">start recording</button>
+        <button onclick="stop_recording()">stop recording</button>
+        <video controls></video>
+    </div>
     <!-- <br><p class="filelabel">Caption upload (see <a href="/audio/captions/placeholder.json">audio/captions/placeholder.json</a>)</p> -->
     <!-- <input type="file" id="captionUpload" accept=".json"> -->
     <script src="script.js"></script>

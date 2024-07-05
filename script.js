@@ -84,6 +84,57 @@ analyser.fftSize = 2048;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 
+var videoStream = canvas.captureStream(30);
+var audioStream = audio.captureStream(); // Capture audio stream from the audio element
+
+// Combine video and audio streams into a single MediaStream
+var combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
+
+var options = {
+    mimeType: 'video/webm;codecs=vp9', // Adjust codec based on browser support
+    videoBitsPerSecond : 25000000 // 25Mbps bitrate for high quality
+};
+var mediaRecorder = new MediaRecorder(combinedStream, options);
+
+const video = document.querySelector("video");
+
+mediaRecorder.onstop = function(e) {
+    var blob = new Blob(chunks, { 'type' : 'video/mp4' });
+    chunks = [];
+    var videoURL = URL.createObjectURL(blob);
+    video.src = videoURL;
+};
+var chunks = [];
+mediaRecorder.ondataavailable = function(e) {
+    chunks.push(e.data);
+};
+
+var recording = false;
+
+const delay = (delayInms) => {
+    return new Promise(resolve => setTimeout(resolve, delayInms));
+};
+
+async function start_recording(){
+    // restart();
+    mediaRecorder.start();
+    // await delay(250);
+    // audio.play();
+    recording=true;
+    audio.onended((e)=>{
+        if (recording){
+            recording = false;
+            mediaRecorder.stop();
+        }
+    })
+}
+
+function stop_recording(){
+    mediaRecorder.stop();
+    recording=false;
+}
+
+
 // Function to smoothly move a variable based on audio volume
 function smoothVolumeMovement(variableToUpdate) {
     const bufferLength = analyser.frequencyBinCount;
@@ -94,7 +145,7 @@ function smoothVolumeMovement(variableToUpdate) {
     const volume = dataArray.reduce((acc, val) => acc + val, 0) / bufferLength;
 
     // Smoothly adjust the variable based on volume
-    const targetValue = volume / 255; // Normalize volume to a range of 0 to 1
+    const targetValue = volume / 200; // Normalize volume to a range of 0 to 1
     const smoothingFactor = 0.1; // Adjust as needed for smoother or more responsive movement
 
     // Smoothly move variableToUpdate towards targetValue
@@ -304,34 +355,38 @@ function getRandomOrder(n) {
 }
 
 const canvasWidth = 2120;
+const num_positions = 10;
+const stepMultiplier = 0.1;
+const timeShiftMultiplier = 0.01;
 const order = getRandomOrder(10);
 
-function draw_windows(cur_frame,path=path_a,speed=4,height=700,spacing=200) {
+
+function draw_windows(cur_frame, path = path_a, speed = 4, height = 700, spacing = 200) {
     // Calculate the new positions
     let positions = [];
-    let num_positions = 10; // Fewer positions for more spacing
+    let xShiftBase = cur_frame * speed;
 
     for (let i = 0; i < num_positions; i++) {
-        let t = cur_frame*0.1 + i; // Larger step to space them out more
-        let a = cur_frame * 0.01;    // Timeshift
-        let x = (cur_frame * speed + i * spacing) % canvasWidth; // Move to the right with more spacing and wrap around
-        let y = height + path(t + Math.PI / 2, a) * 50; // Centered around 300 with amplitude scaling
-        positions.push([x-200, y]);
+        let t = cur_frame * stepMultiplier + i;
+        let a = cur_frame * timeShiftMultiplier;
+        let x = (xShiftBase + i * spacing) % canvasWidth;
+        let y = height + path(t + Math.PI / 2, a) * 50;
+        positions.push([x - 200, y]);
     }
 
     // Draw the moving_window and moving_gif at each position
-    for (let i = 0; i < order.length; i++) {
-        let [x, y] = positions[order[i]];
+    for (let i = 0, len = order.length; i < len; i++) {
+        let index = order[i];
+        let [x, y] = positions[index];
 
         // Move and draw the moving_window
-        // moving_window.moveTo(x, y);
-        moving_window.draw(cur_frame+i*6,x,y);
+        moving_window.draw(cur_frame + i * 6, x, y);
 
         // Move and draw the moving_gif
-        // moving_gif.moveTo(x+36, y+55);
-        moving_gif.draw(cur_frame+i,x+36, y+55);
+        moving_gif.draw(cur_frame + i, x + 36, y + 55);
     }
 }
+
 
 const third_width = canvasWidth / 3;
 
