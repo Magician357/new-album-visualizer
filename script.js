@@ -54,23 +54,23 @@ check_size();
 //     }
 
 document.getElementById('audioFileInput').addEventListener('change', async function(event) {
-    const audioElement = document.getElementById('audio');
-    const nowPlayingElement = document.getElementById('now_playing_editable');
+    // const nowPlayingElement = document.getElementById('now_playing_editable');
     const file = event.target.files[0];
     if (file) {
         // Stop any ongoing recording
-        if (mediaRecorder && mediaRecorder.state === "recording") {
+        if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
             mediaRecorder.stop();
         }
 
         const objectURL = URL.createObjectURL(file);
-        audioElement.src = objectURL;
+        audio.src = objectURL;
         //audioElement.play();
         //nowPlayingElement.textContent = 'Now playing:\n' + file.name;
         playing_text = file.name;
+        render_text();
         
         // Wait for audio element to be ready
-        await audioElement.play();
+        // await audioElement.play();
 
         // Capture audio stream from the audio element
         audioStream = audio.captureStream();
@@ -172,8 +172,7 @@ function stop_recording() {
 
 // Function to smoothly move a variable based on audio volume
 function smoothVolumeMovement(variableToUpdate) {
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
+
     
     // Get the current volume level
     analyser.getByteFrequencyData(dataArray);
@@ -235,33 +234,54 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     this.frameCount=frameCount;
     this.invertColors=invertColors;
 
+    this.canvases = [];
+    this.images.forEach((img)=> {
+        let cur_canvas = new OffscreenCanvas(this.width,this.height);
+        // cur_canvas.width=this.width; 
+        // cur_canvas.height = this.height;
+        let cur_ctx = cur_canvas.getContext("2d");
+        img.onload = () => {cur_ctx.drawImage(img,0,0,this.width,this.height);}
+        if (invertColors) {
+            let imageData = cur_ctx.getImageData(0, 0, this.width, this.height);
+            let data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 255 - data[i]; // Red
+                data[i + 1] = 255 - data[i + 1]; // Green
+                data[i + 2] = 255 - data[i + 2]; // Blue
+            }
+            cur_ctx.putImageData(imageData, 0, 0);
+        }
+        // document.body.appendChild(cur_canvas);
+        this.canvases.push(cur_canvas);
+    })
+
+    console.log(this.canvases);
+
     this.draw = (cur_frame,curX=this.curX,curY=this.curY) => {
         ctx.globalAlpha = opacity;
         let [mX, mY] = animation_function((cur_frame*timeshift)+delay);
-        let img = this.images[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
+        let img = this.canvases[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
     
-        // Clear the area before drawing
-        if (this.invertColors) ctx.clearRect(curX + mX , curY + mY, this.width, this.height);
     
         // Draw the image on the canvas
         ctx.drawImage(img, curX + mX, curY + mY, this.width, this.height);
     
-        if (this.invertColors) {
-            // Get the image data from the canvas
-            let imageData = ctx.getImageData(curX + mX, curY + mY, this.width, this.height);
-            let data = imageData.data;
+        // if (this.invertColors) {
+        //     // Get the image data from the canvas
+        //     let imageData = ctx.getImageData(curX + mX, curY + mY, this.width, this.height);
+        //     let data = imageData.data;
     
-            // Invert the colors while preserving the alpha channel
-            for (let i = 0; i < data.length; i += 4) {
-                data[i] = 255 - data[i];       // Red
-                data[i + 1] = 255 - data[i + 1]; // Green
-                data[i + 2] = 255 - data[i + 2]; // Blue
-                // Alpha (data[i + 3]) remains unchanged
-            }
+        //     // Invert the colors while preserving the alpha channel
+        //     for (let i = 0; i < data.length; i += 4) {
+        //         data[i] = 255 - data[i];       // Red
+        //         data[i + 1] = 255 - data[i + 1]; // Green
+        //         data[i + 2] = 255 - data[i + 2]; // Blue
+        //         // Alpha (data[i + 3]) remains unchanged
+        //     }
     
-            // Put the modified image data back on the canvas
-            ctx.putImageData(imageData, curX + mX, curY + mY);
-        }
+        //     // Put the modified image data back on the canvas
+        //     ctx.putImageData(imageData, curX + mX, curY + mY);
+        // }
         ctx.globalAlpha = 1;
     }
 
@@ -324,7 +344,7 @@ light_hanging.src = 'images/lightbulb.png';
 const spacing = 145;
 const width = 150;
 const height = 350;
-var light_window = new drawn_gif("images/light window", 5, 120, 0, 180, width, width, true, bob_light); 
+var light_window = new drawn_gif("images/light window", 5, 120, 0, 180, width, width, false, bob_light); 
 
 function draw_lights(cur_frame) {
     for (let n = spacing; n < 1920 - spacing; n = n + spacing + width) {
@@ -425,41 +445,50 @@ function draw_windows(cur_frame, path = path_a, speed = 4, height = 700, spacing
 
 const third_width = canvasWidth / 3;
 
+const text_canvas = new OffscreenCanvas(120,90);
+const text_ctx = text_canvas.getContext("2d");
+text_ctx.fillStyle="white";
+
+const text_offset = 20;
+
+function render_text(){
+    text_ctx.clearRect(0,0,120,90);
+    text_ctx.font = "15px monospace";
+    text_ctx.fillText("Now playing:", 0, text_offset);
+    text_ctx.font = "12px monospace";
+    if (playing_text.length > 20) {
+        // Split text at the closest whitespace to the middle
+        let mid = Math.floor(playing_text.length / 2);
+        let before = playing_text.lastIndexOf(' ', mid);
+        let after = playing_text.indexOf(' ', mid + 1);
+        let splitIndex = before !== -1 ? before : after;
+
+        if (splitIndex !== -1) {
+            let line1 = playing_text.substring(0, splitIndex);
+            let line2 = playing_text.substring(splitIndex + 1);
+
+            text_ctx.fillText(line1, 0, 20+text_offset);
+            text_ctx.fillText(line2, 0, 35+text_offset);
+        } else {
+            // If no whitespace found, fall back to breaking at the middle
+            let line1 = playing_text.substring(0, mid);
+            let line2 = playing_text.substring(mid);
+
+            text_ctx.fillText(line1, 0, 20+text_offset);
+            text_ctx.fillText(line2, 0, y + 35+text_offset);
+        }
+    } else {
+        text_ctx.fillText(playing_text, 0, 20+text_offset);
+    }
+}
+
 function draw_text_window(cur_frame) {
     for (let i = 0; i <= 2; i++) {
         let x = ((cur_frame * 4 + third_width * i) % canvasWidth) - 200;
         let y = 725 + path_c(x * 0.01, cur_frame * 0.01) * 10;
         moving_window.draw(cur_frame, x, y);
 
-        ctx.fillStyle = "white";
-        ctx.font = "15px monospace";
-        ctx.fillText("Now playing:", x + 20, y + 70);
-        ctx.font = "12px monospace";
-
-        if (playing_text.length > 20) {
-            // Split text at the closest whitespace to the middle
-            let mid = Math.floor(playing_text.length / 2);
-            let before = playing_text.lastIndexOf(' ', mid);
-            let after = playing_text.indexOf(' ', mid + 1);
-            let splitIndex = before !== -1 ? before : after;
-
-            if (splitIndex !== -1) {
-                let line1 = playing_text.substring(0, splitIndex);
-                let line2 = playing_text.substring(splitIndex + 1);
-
-                ctx.fillText(line1, x + 20, y + 90);
-                ctx.fillText(line2, x + 20, y + 105);
-            } else {
-                // If no whitespace found, fall back to breaking at the middle
-                let line1 = playing_text.substring(0, mid);
-                let line2 = playing_text.substring(mid);
-
-                ctx.fillText(line1, x + 20, y + 90);
-                ctx.fillText(line2, x + 20, y + 105);
-            }
-        } else {
-            ctx.fillText(playing_text, x + 20, y + 90);
-        }
+        ctx.drawImage(text_canvas,x+20,y+70-text_offset);
     }
 }
 
@@ -523,10 +552,12 @@ function animate() {
 
     // get fps
     current_time = performance.now();
-    fps_monitor.innerText = Math.floor((1/((current_time-lastFrame)/1000))*100)/100;
+    // if ((Math.floor(current_time/5)*5)%20 === 0) {
+    fps_monitor.innerText = `${Math.floor((1/((current_time-lastFrame)/1000))*100)/100} (${Math.floor((current_time-lastFrame)*10)/10} ms since last frame)`;
+    // }
     lastFrame = current_time;
 
-    cur_frame=(performance.now()-start_offset)/24;
+    cur_frame=(current_time-start_offset)/24;
 
     volume = smoothVolumeMovement(volume);
     secondary_frame+=Math.pow(2,volume*5);
@@ -556,3 +587,4 @@ audio.onplay = () => {
 };
 
 animate();
+render_text();
