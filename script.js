@@ -53,21 +53,56 @@ check_size();
 //         });
 //     }
 
-document.getElementById('audioFileInput').addEventListener('change', function(event) {
+document.getElementById('audioFileInput').addEventListener('change', async function(event) {
     const audioElement = document.getElementById('audio');
     const nowPlayingElement = document.getElementById('now_playing_editable');
     const file = event.target.files[0];
     if (file) {
+        // Stop any ongoing recording
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+        }
+
         const objectURL = URL.createObjectURL(file);
         audioElement.src = objectURL;
-        // audioElement.play();
-        // nowPlayingElement.textContent = 'Now playing:\n' + file.name;
-        playing_text=file.name;
+        //audioElement.play();
+        //nowPlayingElement.textContent = 'Now playing:\n' + file.name;
+        playing_text = file.name;
+        
+        // Wait for audio element to be ready
+        await audioElement.play();
+
+        // Capture audio stream from the audio element
+        audioStream = audio.captureStream();
+
+        // Combine video and audio streams into a single MediaStream
+        combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
+
+        mediaRecorder = new MediaRecorder(combinedStream, options);
+
+        mediaRecorder.onstop = function(e) {
+            var blob = new Blob(chunks, { 'type' : 'video/mp4' });
+            chunks = [];
+            var videoURL = URL.createObjectURL(blob);
+            video.src = videoURL;
+        
+            // Create a link element and set its href to the video URL
+            var a = document.createElement('a');
+            a.href = videoURL;
+            a.download = 'recorded_video.mp4';
+            document.body.appendChild(a);
+            
+            // Programmatically click the link to trigger the download
+            a.click();
+            
+            // Remove the link from the document
+            document.body.removeChild(a);
+        };
+        mediaRecorder.ondataavailable = function(e) {
+            chunks.push(e.data);
+        };
     }
 });
-
-
-
 
 const canvas = document.getElementById('visualizer');
 const ctx = canvas.getContext('2d');
@@ -84,7 +119,7 @@ analyser.fftSize = 2048;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 
-var videoStream = canvas.captureStream(30);
+var videoStream = canvas.captureStream(60);
 var audioStream = audio.captureStream(); // Capture audio stream from the audio element
 
 // Combine video and audio streams into a single MediaStream
@@ -92,7 +127,7 @@ var combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioS
 
 var options = {
     mimeType: 'video/webm;codecs=vp9', // Adjust codec based on browser support
-    videoBitsPerSecond : 25000000 // 25Mbps bitrate for high quality
+    videoBitsPerSecond: 25000000 // 25Mbps bitrate for high quality
 };
 var mediaRecorder = new MediaRecorder(combinedStream, options);
 
@@ -103,35 +138,35 @@ mediaRecorder.onstop = function(e) {
     chunks = [];
     var videoURL = URL.createObjectURL(blob);
     video.src = videoURL;
+
+    // Create a link element and set its href to the video URL
+    var a = document.createElement('a');
+    a.href = videoURL;
+    a.download = 'recorded_video.mp4';
+    document.body.appendChild(a);
+    
+    // Programmatically click the link to trigger the download
+    a.click();
+    
+    // Remove the link from the document
+    document.body.removeChild(a);
 };
+
 var chunks = [];
 mediaRecorder.ondataavailable = function(e) {
     chunks.push(e.data);
 };
 
-var recording = false;
+const recording_indicator = document.getElementById("recording_indicator");
 
-const delay = (delayInms) => {
-    return new Promise(resolve => setTimeout(resolve, delayInms));
-};
-
-async function start_recording(){
-    // restart();
+function start_recording() {
     mediaRecorder.start();
-    // await delay(250);
-    // audio.play();
-    recording=true;
-    audio.onended((e)=>{
-        if (recording){
-            recording = false;
-            mediaRecorder.stop();
-        }
-    })
+    recording_indicator.innerText = "recording";
 }
 
-function stop_recording(){
+function stop_recording() {
     mediaRecorder.stop();
-    recording=false;
+    recording_indicator.innerText = "not recording";
 }
 
 
