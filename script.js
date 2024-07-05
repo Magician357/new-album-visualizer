@@ -104,6 +104,8 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
     }
 });
 
+// Assume existing setup code is here
+
 const canvas = document.getElementById('visualizer');
 const ctx = canvas.getContext('2d');
 const audio = document.getElementById('audio');
@@ -119,61 +121,98 @@ analyser.fftSize = 2048;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 
-var videoStream = canvas.captureStream(60);
-var audioStream = audio.captureStream(); // Capture audio stream from the audio element
+// Assume existing visualizer draw code is here
 
-// Combine video and audio streams into a single MediaStream
-var combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
+// New code for sampling audio and rendering frames
+async function sampleAndRender() {
+    const fps = 60;
+    const interval = 1000 / fps;
+    const duration = audio.duration * 1000; // duration in milliseconds
+    const frames = [];
 
-var options = {
-    mimeType: 'video/webm;codecs=vp9', // Adjust codec based on browser support
-    videoBitsPerSecond: 25000000 // 25Mbps bitrate for high quality
-};
-var mediaRecorder = new MediaRecorder(combinedStream, options);
+    audio.pause();
+    audio.currentTime = 0;
 
-const video = document.querySelector("video");
+    animating=false;
 
-mediaRecorder.onstop = function(e) {
-    var blob = new Blob(chunks, { 'type' : 'video/mp4' });
-    chunks = [];
-    var videoURL = URL.createObjectURL(blob);
-    video.src = videoURL;
+    var secondary_frame = 0;
 
-    // Create a link element and set its href to the video URL
-    var a = document.createElement('a');
-    a.href = videoURL;
-    a.download = 'recorded_video.mp4';
-    document.body.appendChild(a);
-    
-    // Programmatically click the link to trigger the download
-    a.click();
-    
-    // Remove the link from the document
-    document.body.removeChild(a);
-};
+    for (let time = 0; time < duration; time += interval) {
+        audio.currentTime = time / 1000; // Set audio to the correct time in seconds
+        audio.play();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        analyser.getByteFrequencyData(dataArray);
+        audio.pause();
 
-var chunks = [];
-mediaRecorder.ondataavailable = function(e) {
-    chunks.push(e.data);
-};
+        // Render frame based on the current audio sample
+        secondary_frame=render_frame(time/24,secondary_frame);
 
-const recording_indicator = document.getElementById("recording_indicator");
+        // Capture the frame
+        const frame = canvas.toDataURL();
+        frames.push(frame);
 
-function start_recording() {
-    mediaRecorder.start();
-    recording_indicator.innerText = "recording";
+        // await new Promise(resolve => setTimeout(resolve, interval));
+    }
+
+    saveVideo(frames, fps);
 }
 
-function stop_recording() {
-    mediaRecorder.stop();
-    recording_indicator.innerText = "not recording";
+function saveVideo(frames, fps) {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1920;
+    canvas.height = 1080;
+
+    const stream = canvas.captureStream(fps);
+    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+    const chunks = [];
+
+    recorder.ondataavailable = function(e) {
+        chunks.push(e.data);
+    };
+
+    recorder.onstop = function() {
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        const videoURL = URL.createObjectURL(blob);
+
+        // Create a link element and set its href to the video URL
+        const a = document.createElement('a');
+        a.href = videoURL;
+        a.download = 'recorded_video.mp4';
+        document.body.appendChild(a);
+
+        // Programmatically click the link to trigger the download
+        a.click();
+
+        // Remove the link from the document
+        document.body.removeChild(a);
+    };
+
+    recorder.start();
+
+    frames.forEach((frame, index) => {
+        setTimeout(() => {
+            const img = new Image();
+            img.src = frame;
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                if (index === frames.length - 1) {
+                    recorder.stop();
+                }
+            };
+        }, index * 1000 / fps);
+    });
 }
+
+document.getElementById('recordButton').addEventListener('click', sampleAndRender);
+
 
 
 // Function to smoothly move a variable based on audio volume
 function smoothVolumeMovement(variableToUpdate) {
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
+    // const bufferLength = analyser.frequencyBinCount;
+    // const dataArray = new Uint8Array(bufferLength);
     
     // Get the current volume level
     analyser.getByteFrequencyData(dataArray);
@@ -187,6 +226,7 @@ function smoothVolumeMovement(variableToUpdate) {
     variableToUpdate += (targetValue - variableToUpdate) * smoothingFactor;
 
     // Ensure variableToUpdate stays within bounds (0 to 1)
+// sourcery skip: dont-reassign-parameters
     variableToUpdate = Math.min(Math.max(variableToUpdate, 0), 5);
 
     // Return the updated variable
@@ -249,7 +289,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
         if (this.invertColors) {
             // Get the image data from the canvas
             let imageData = ctx.getImageData(curX + mX, curY + mY, this.width, this.height);
-            let data = imageData.data;
+            let {data} = imageData;
     
             // Invert the colors while preserving the alpha channel
             for (let i = 0; i < data.length; i += 4) {
@@ -272,7 +312,6 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
 }
 
 function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.height,color="white",stroke=5) {
-    analyser.getByteTimeDomainData(dataArray);
 
     ctx.lineWidth = stroke;
     ctx.strokeStyle = color;
@@ -518,15 +557,15 @@ var volume = 0;
 
 var start_offset = 0;
 
-function animate() {
-    requestAnimationFrame(animate);
+function render_frame(cur_frame,secondary_frame) {
+    // requestAnimationFrame(animate);
 
     // get fps
     current_time = performance.now();
     fps_monitor.innerText = Math.floor((1/((current_time-lastFrame)/1000))*100)/100;
     lastFrame = current_time;
 
-    cur_frame=(performance.now()-start_offset)/24;
+    // cur_frame=(performance.now()-start_offset)/24;
 
     volume = smoothVolumeMovement(volume);
     secondary_frame+=Math.pow(2,volume*5);
@@ -541,6 +580,18 @@ function animate() {
     small_visualizer.draw(cur_frame);
     draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black",3);
     draw_lights(cur_frame);
+
+    return secondary_frame;
+}
+
+var animating = true;
+
+function animate(){
+    if (animating) {
+        requestAnimationFrame(animate);
+        analyser.getByteTimeDomainData(dataArray);
+        secondary_frame = render_frame((performance.now()-start_offset)/24,secondary_frame);
+    }
 }
 
 function restart(){
