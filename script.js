@@ -84,6 +84,30 @@ analyser.fftSize = 2048;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 
+// Function to smoothly move a variable based on audio volume
+function smoothVolumeMovement(variableToUpdate) {
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    // Get the current volume level
+    analyser.getByteFrequencyData(dataArray);
+    const volume = dataArray.reduce((acc, val) => acc + val, 0) / bufferLength;
+
+    // Smoothly adjust the variable based on volume
+    const targetValue = volume / 255; // Normalize volume to a range of 0 to 1
+    const smoothingFactor = 0.1; // Adjust as needed for smoother or more responsive movement
+
+    // Smoothly move variableToUpdate towards targetValue
+    variableToUpdate += (targetValue - variableToUpdate) * smoothingFactor;
+
+    // Ensure variableToUpdate stays within bounds (0 to 1)
+    variableToUpdate = Math.min(Math.max(variableToUpdate, 0), 5);
+
+    // Return the updated variable
+    return variableToUpdate;
+}
+
+
 function loadImages(folder, frameCount) {
     let images=[];
     for (let i = 0; i < frameCount; i++) {
@@ -349,25 +373,91 @@ function draw_text_window(cur_frame) {
     }
 }
 
-var cur_frame = 0
+// const width = ctx.canvas.width;
+// const height = ctx.canvas.height;
+
+var gradients = [];
+for (let i = 0; i < 10; i++) {
+    // Random angle for each gradient
+    let angle = Math.random() * 360;
+    // Create a gradient object with properties
+    gradients.push({
+        angle: angle,
+        x: Math.random() * 1920,  // Random initial position
+        y: Math.random() * 1080,
+        speed: Math.random() * 2 + 1,  // Random speed for movement
+        color1: `rgba(0, 0, 0, ${Math.random() * 0.2 + 0.1})`,  // Dark colors with low opacity
+        color2: `rgba(0, 0, 0, ${Math.random() * 0.2 + 0.1})`
+    });
+}
+
+const background_images = loadImages("images/blurred_images",5);
+const background_move = [
+    (t) => [Math.cos(t)*100,Math.sin(t)*100],
+    (t) => [Math.cos(t/3)*100,Math.sin(t/3)*100],
+    (t) => [Math.cos(t)*150,Math.sin(-t)*100],
+    (t) => [Math.cos(t/2+0.5)*100,Math.sin(t/3 + 0.5)*100],
+    (t) => [Math.sin(t/4)*150,Math.cos(t/4)*100]
+]
+
+function draw_background(cur_frame) {
+    // Code for background
+
+    ctx.globalAlpha = 0.1;
+    for (let i = 0;i<5;i++){
+        let [x,y] = background_move[i](cur_frame/24);
+        ctx.drawImage(background_images[i],x-200,y-200);
+    }
+    
+    // Draw the custom background object
+    background.draw(cur_frame);
+}
+
+
+
+var cur_frame = 0;
+var secondary_frame = 0;
 var playing_text = "placeholder.wav";
+
+const fps_monitor = document.getElementById("fps");
+
+var lastFrame = performance.now();
+var current_time;
+
+var volume = 0;
+
+var start_offset = 0;
 
 function animate() {
     requestAnimationFrame(animate);
-    cur_frame++;
+
+    // get fps
+    current_time = performance.now();
+    fps_monitor.innerText = Math.floor((1/((current_time-lastFrame)/1000))*100)/100;
+    lastFrame = current_time;
+
+    cur_frame=(performance.now()-start_offset)/24;
+
+    volume = smoothVolumeMovement(volume);
+    secondary_frame+=Math.pow(2,volume*5);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    background.draw(cur_frame);
-    draw_windows(cur_frame);
-    draw_windows(cur_frame,path_b,5,750,210);
+    draw_background(cur_frame);
+    draw_windows(secondary_frame);
+    draw_windows(secondary_frame,path_b,5,750,210);
     draw_visualizer();
-    draw_text_window(cur_frame)
+    draw_text_window((cur_frame+secondary_frame)/2);
     draw_mainWindow(cur_frame);
     small_visualizer.draw(cur_frame);
     draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black",3);
     draw_lights(cur_frame);
 }
 
-
+function restart(){
+    volume = 0;
+    start_offset = performance.now();
+    secondary_frame = 0;
+}
 
 audio.onplay = () => {
     if (audioContext.state === 'suspended') {
