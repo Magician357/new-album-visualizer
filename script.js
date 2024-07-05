@@ -116,7 +116,7 @@ function bob_light(cur_frame){
     return [0,3*Math.sin(cur_frame/30)-1.5];
 }
 
-function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors=false,animation_function=(cur_frame)=>[0,0],delay=0,timeshift=1){
+function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors=false,animation_function=(cur_frame)=>[0,0],delay=0,timeshift=1,opacity=1){
     this.images = loadImages(folder,frameCount);
     this.curX = x;
     this.curY = y;
@@ -126,6 +126,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     this.invertColors=invertColors;
 
     this.draw = (cur_frame,curX=this.curX,curY=this.curY) => {
+        ctx.globalAlpha = opacity;
         let [mX, mY] = animation_function((cur_frame*timeshift)+delay);
         let img = this.images[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
     
@@ -151,6 +152,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
             // Put the modified image data back on the canvas
             ctx.putImageData(imageData, curX + mX, curY + mY);
         }
+        ctx.globalAlpha = 1;
     }
 
     this.moveTo= (newX,newY) =>{
@@ -159,14 +161,14 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     }
 }
 
-function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.height,color="white") {
+function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.height,color="white",stroke=5) {
     analyser.getByteTimeDomainData(dataArray);
 
-    ctx.lineWidth = 3;
+    ctx.lineWidth = stroke;
     ctx.strokeStyle = color;
     ctx.beginPath();
 
-    const sliceWidth = width * 1.0 / bufferLength;
+    const sliceWidth = width / bufferLength;
     let xPos = x;
 
     for (let i = 0; i < bufferLength; i++) {
@@ -190,6 +192,8 @@ function draw_visualizer(x = 0, y = 0, width = canvas.width, height = canvas.hei
 function bob_small(cur_frame){
     return [bob(cur_frame*0.45)[1]*0.8,bob((cur_frame*.95)+7)[1]]
 }
+
+var background = new drawn_gif("images/background",4,60,0,0,1920,1080,false,(c)=>[0,0],0,1,0.9);
 
 var mainWindow = new drawn_gif("images/window 1",4,48,785,450,350,600,false,bob);
 
@@ -352,13 +356,14 @@ function animate() {
     requestAnimationFrame(animate);
     cur_frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    background.draw(cur_frame);
     draw_windows(cur_frame);
     draw_windows(cur_frame,path_b,5,750,210);
     draw_visualizer();
     draw_text_window(cur_frame)
     draw_mainWindow(cur_frame);
     small_visualizer.draw(cur_frame);
-    draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black");
+    draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black",3);
     draw_lights(cur_frame);
 }
 
