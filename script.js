@@ -445,8 +445,13 @@ function draw_text_window(cur_frame) {
 
 const background_images_pre = loadImages("images/blurred_images",5);
 var background_images = [];
+var finished_images = 0;
 background_images_pre.forEach((img) => img.onload= () => {
-    let cur_canvas= new OffscreenCanvas(2500,2500);cur_canvas.getContext("2d").drawImage(img,0,0); background_images.push(img);
+    let cur_canvas= new OffscreenCanvas(2500,2500);
+    cur_canvas.getContext("2d").drawImage(img,0,0); 
+    background_images.push(cur_canvas);
+    console.log("canvas finished");
+    finished_images++;
 });
 const background_move = [
     (t) => [Math.cos(t)*100,Math.sin(t)*100],
@@ -464,6 +469,7 @@ function draw_background(cur_frame) {
         let [x,y] = background_move[i](cur_frame/24);
         ctx.drawImage(background_images[i],x-200,y-200);
     }
+    ctx.globalAlpha = 1;
     
     // Draw the custom background object
     background.draw(cur_frame);
