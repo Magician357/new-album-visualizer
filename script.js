@@ -11,40 +11,45 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
         playing_text = file.name;
         render_text();
 
-        // Wait for audio element to be ready
-        await audio.play();
-
-        // Capture audio stream from the audio element
-        audioStream = audio.captureStream();
-
-        // Combine video and audio streams into a single MediaStream
-        combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
-
-        mediaRecorder = new MediaRecorder(combinedStream, options);
-
-        mediaRecorder.onstop = function(e) {
-            var blob = new Blob(chunks, { 'type' : 'video/mp4' });
-            chunks = [];
-            var videoURL = URL.createObjectURL(blob);
-            video.src = videoURL;
-
-            // Create a link element and set its href to the video URL
-            var a = document.createElement('a');
-            a.href = videoURL;
-            a.download = 'recorded_video.mp4';
-            document.body.appendChild(a);
-
-            // Programmatically click the link to trigger the download
-            a.click();
-
-            // Remove the link from the document
-            document.body.removeChild(a);
-        };
-        mediaRecorder.ondataavailable = function(e) {
-            chunks.push(e.data);
-        };
+        await load_audio();
     }
 });
+
+async function load_audio(){
+    // Wait for audio element to be ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await audio.play();
+
+    // Capture audio stream from the audio element
+    audioStream = audio.captureStream();
+
+    // Combine video and audio streams into a single MediaStream
+    combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
+
+    mediaRecorder = new MediaRecorder(combinedStream, options);
+
+    mediaRecorder.onstop = function() {
+        var blob = new Blob(chunks, { 'type': 'video/webm' });
+        chunks = [];
+        var videoURL = URL.createObjectURL(blob);
+        video.src = videoURL;
+    
+        // Create a link element and set its href to the video URL
+        var a = document.createElement('a');
+        a.href = videoURL;
+        a.download = 'recorded_video.webm'; // Use webm format to match the MIME type
+        document.body.appendChild(a);
+    
+        // Programmatically click the link to trigger the download
+        a.click();
+    
+        // Remove the link from the document
+        document.body.removeChild(a);
+    };
+    mediaRecorder.ondataavailable = function(e) {
+        chunks.push(e.data);
+    };
+}
 
 const canvas = document.getElementById('visualizer');
 const ctx = canvas.getContext('2d');
@@ -74,6 +79,8 @@ var options = {
 var mediaRecorder = new MediaRecorder(combinedStream, options);
 
 const video = document.querySelector("video");
+
+load_audio();
 
 mediaRecorder.onstop = function() {
     var blob = new Blob(chunks, { 'type': 'video/webm' });
