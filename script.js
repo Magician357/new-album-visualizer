@@ -392,7 +392,7 @@ function render_text(){
     text_ctx.font = "15px monospace";
     text_ctx.fillText("Now playing:", 0, text_offset);
     text_ctx.font = "12px monospace";
-    if (playing_text.length > 20) {
+    if (playing_text.length > 15) {
         // Split text at the closest whitespace to the middle
         let mid = Math.floor(playing_text.length / 2);
         let before = playing_text.lastIndexOf(' ', mid);
