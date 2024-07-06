@@ -15,8 +15,9 @@ def generate_blurred_noise(scaled_width, scaled_height, blur_radius, scale_facto
     # Generate random noise
     for x in range(width):
         for y in range(height):
-            color = random.randint(0, 75)
-            colors = (color, color, color)
+            # color = random.randint(0, 75)
+            # colors = (color, color, color)
+            colors = (random.randint(0, 75),random.randint(0, 75),random.randint(0, 75))
             draw.point((x, y), fill=colors)
 
     # Scale up the image to desired dimensions

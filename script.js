@@ -464,7 +464,7 @@ const background_move = [
 function draw_background(cur_frame) {
     // Code for background
 
-    ctx.globalAlpha = 0.1;
+    ctx.globalAlpha = 0.15;
     for (let i = 0;i<5;i++){
         let [x,y] = background_move[i](cur_frame/24);
         ctx.drawImage(background_images[i],x-200,y-200);
