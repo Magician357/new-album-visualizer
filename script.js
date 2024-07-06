@@ -270,6 +270,17 @@ var light_hanging;
 light_hanging_img.onload = () => {
     light_hanging = new OffscreenCanvas(light_hanging_img.width,light_hanging_img.height);
     light_hanging.getContext("2d").drawImage(light_hanging_img,0,0);
+
+    prerendered_lights = new OffscreenCanvas(1920,light_hanging_img.height+50);
+    let cur_context = prerendered_lights.getContext("2d");
+
+    for (let n = spacing; n < 1920 - spacing; n = n + spacing + width) {
+        let x = n;
+        if (!(((n-spacing) / (spacing + width)) === 4)) { // Check if it is the fifth light
+            cur_context.drawImage(light_hanging, x, 0); // Draw the light normally
+        }
+        light_x.push(n);
+    }
 }
 
 const spacing = 145;
@@ -278,21 +289,24 @@ const width_half = width/2;
 const height = 350;
 var light_window = new drawn_gif("images/light window", 5, 120, 0, 180, width, width, false, bob_light); 
 
+var light_x = [];
+var prerendered_lights;
+
+// render all lights before hand except for the moving one
+
 function draw_lights(cur_frame) {
-    for (let n = spacing; n < 1920 - spacing; n = n + spacing + width) {
-        let x = n;
-        let y = 0;
-        if (((n-spacing) / (spacing + width)) === 4) { // Check if it is the fifth light
+    ctx.drawImage(prerendered_lights,0,0);
+    for (let n = 0; n<6; n++) {
+        let x = light_x[n];
+        if (n===4) {
             let swing_angle = Math.sin(cur_frame * 0.05) * Math.PI / 8; // Calculate the swing angle
             ctx.save(); // Save the current state of the canvas
-            ctx.translate((x + width_half)|0, y); // Move the canvas origin to the top middle of the light
+            ctx.translate((x + width_half)|0, 0); // Move the canvas origin to the top middle of the light
             ctx.rotate(swing_angle); // Rotate the canvas by the swing angle
             ctx.drawImage(light_hanging, (-width_half)|0, 0); // Draw the light at the new origin
             ctx.restore(); // Restore the original state of the canvas
-        } else {
-            ctx.drawImage(light_hanging, x, y); // Draw the light normally
         }
-        light_window.draw(cur_frame + n / spacing, x);
+        light_window.draw(cur_frame + n*10, x);
     }
 }
 
@@ -486,7 +500,7 @@ function animate() {
     cur_frame = (current_time - start_offset) / 24;
 
     volume = smoothVolumeMovement(volume);
-    secondary_frame += Math.pow(2, volume * 5) * elapsed / 20;
+    secondary_frame += (Math.pow(2, volume * 5) * elapsed / 20);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_background(cur_frame);
