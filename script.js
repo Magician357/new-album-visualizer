@@ -62,7 +62,7 @@ analyser.fftSize = 2048;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 
-var videoStream = canvas.captureStream(60);
+var videoStream = canvas.captureStream(120);
 var audioStream = audio.captureStream(); // Capture audio stream from the audio element
 
 // Combine video and audio streams into a single MediaStream
@@ -76,8 +76,8 @@ var mediaRecorder = new MediaRecorder(combinedStream, options);
 
 const video = document.querySelector("video");
 
-mediaRecorder.onstop = function(e) {
-    var blob = new Blob(chunks, { 'type' : 'video/mp4' });
+mediaRecorder.onstop = function() {
+    var blob = new Blob(chunks, { 'type': 'video/webm' });
     chunks = [];
     var videoURL = URL.createObjectURL(blob);
     video.src = videoURL;
@@ -85,7 +85,7 @@ mediaRecorder.onstop = function(e) {
     // Create a link element and set its href to the video URL
     var a = document.createElement('a');
     a.href = videoURL;
-    a.download = 'recorded_video.mp4';
+    a.download = 'recorded_video.webm'; // Use webm format to match the MIME type
     document.body.appendChild(a);
     
     // Programmatically click the link to trigger the download
@@ -328,13 +328,13 @@ var moving_gif = new drawn_gif("images/visualizer",9,10,0,0,75,75,false);
 function path_a(t,a){
     // t is how far along
     // a is the timeshift
-    return Math.sin(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.sin(t * 0.9 + a * 0.5)) + (0.05 * Math.sin(5 * t + 0.7 * a));
+    return Math.sin(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.sin(t * 0.9 + a * 0.5));
 }
 
 function path_b(t,a){
     // t is how far along
     // a is the timeshift
-    return Math.cos(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.cos(t * 0.9 + a * 0.5)) + (0.1 * Math.sin(5 * t + 0.7 * a));
+    return Math.cos(t+a) + (0.9 * Math.sin(t * 0.5 + a*0.9)) + (0.6 * Math.cos(t * 0.9 + a * 0.5));
 }
 
 function path_c(t,a){
@@ -448,7 +448,9 @@ var background_images = [];
 var finished_images = 0;
 background_images_pre.forEach((img) => img.onload= () => {
     let cur_canvas= new OffscreenCanvas(2500,2500);
-    cur_canvas.getContext("2d").drawImage(img,0,0); 
+    let cur_ctx = cur_canvas.getContext("2d");
+    cur_ctx.globalAlpha = 0.15; 
+    cur_ctx.drawImage(img,0,0); 
     background_images.push(cur_canvas);
     console.log("canvas finished");
     finished_images++;
@@ -464,12 +466,12 @@ const background_move = [
 function draw_background(cur_frame) {
     // Code for background
 
-    ctx.globalAlpha = 0.15;
+    // ctx.globalAlpha = 0.15;
     for (let i = 0;i<5;i++){
         let [x,y] = background_move[i](cur_frame/24);
         ctx.drawImage(background_images[i],x-200,y-200);
     }
-    ctx.globalAlpha = 1;
+    // ctx.globalAlpha = 1;
     
     // Draw the custom background object
     background.draw(cur_frame);
@@ -490,39 +492,63 @@ var volume = 0;
 
 var start_offset = 0;
 
+const targetFPS = 60;
+const frameDuration = 1000 / targetFPS;
+const fpsSamples = 10; // Number of frames to average
+
+let lastFrameTime = performance.now();
+let frameTimes = [60,60,60,60,60,60,60,60,60,60]; // Array to store frame times
+
 function animate() {
     requestAnimationFrame(animate);
 
-    // get fps
-    current_time = performance.now();
-    // if ((Math.floor(current_time/5)*5)%20 === 0) {
-    fps_monitor.innerText = `${Math.floor((1/((current_time-lastFrame)/1000))*100)/100} (${Math.floor((current_time-lastFrame)*10)/10} ms since last frame)`;
-    // }
+    let current_time = performance.now();
+    let elapsed = current_time - lastFrameTime;
+
+    // Update the last frame time
+    lastFrameTime = current_time - (elapsed % frameDuration);
+
+    // Calculate and update fps
+    frameTimes.push(elapsed);
+    frameTimes.shift(); // Remove the oldest frame time
+    let averageFrameTime = frameTimes.reduce((sum, time) => sum + time, 0) / frameTimes.length;
+    let averageFPS = 1000 / averageFrameTime;
+
+    fps_monitor.innerText = `${Math.floor(averageFPS * 100) / 100} (${Math.floor(averageFrameTime * 10) / 10} ms per frame)`;
+
     lastFrame = current_time;
 
-    cur_frame=(current_time-start_offset)/24;
+    cur_frame = (current_time - start_offset) / 24;
 
     volume = smoothVolumeMovement(volume);
-    secondary_frame+=Math.pow(2,volume*5);
+    secondary_frame += Math.pow(2, volume * 5) * elapsed / 20;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_background(cur_frame);
     draw_windows(secondary_frame);
-    draw_windows(secondary_frame,path_b,5,750,210);
+    draw_windows(secondary_frame, path_b, 5, 750, 210);
     draw_visualizer();
-    draw_text_window((cur_frame+secondary_frame)/2);
+    draw_text_window((cur_frame + secondary_frame) / 2);
     draw_mainWindow(cur_frame);
     small_visualizer.draw(cur_frame);
-    draw_visualizer(880+(bob(cur_frame*0.45)[1]*0.8),595+bob((cur_frame*.95)+7)[1],160,100,"black",3);
+    draw_visualizer(880 + (bob(cur_frame * 0.45)[1] * 0.8), 595 + bob((cur_frame * .95) + 7)[1], 160, 100, "black", 3);
     draw_lights(cur_frame);
 }
 
-function restart(){
+function restart() {
     volume = 0;
     start_offset = performance.now();
     secondary_frame = 0;
+    frameTimes = [];
     render_text();
 }
+
+// Start the animation loop
+requestAnimationFrame(animate);
+
+
+// Start the animation loop
+requestAnimationFrame(animate);
 
 audio.onplay = () => {
     if (audioContext.state === 'suspended') {
