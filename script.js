@@ -69,14 +69,14 @@ analyser.fftSize = 2048;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 
-var videoStream = canvas.captureStream(120);
+var videoStream = canvas.captureStream(60);
 var audioStream = audio.captureStream(); // Capture audio stream from the audio element
 
 // Combine video and audio streams into a single MediaStream
 var combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
 
 var options = {
-    mimeType: 'video/webm;codecs=vp9', // Adjust codec based on browser support
+    mimeType: 'video/webm;codecs=vp8', // Adjust codec based on browser support
     videoBitsPerSecond: 25000000 // 25Mbps bitrate for high quality
 };
 var mediaRecorder = new MediaRecorder(combinedStream, options);
