@@ -10,9 +10,8 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
         audio.src = objectURL;
         playing_text = file.name;
         render_text();
-        
+
         // Wait for audio element to be ready
-        await new Promise(resolve => setTimeout(resolve, 500));
         await audio.play();
 
         // Capture audio stream from the audio element
@@ -28,16 +27,16 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
             chunks = [];
             var videoURL = URL.createObjectURL(blob);
             video.src = videoURL;
-        
+
             // Create a link element and set its href to the video URL
             var a = document.createElement('a');
             a.href = videoURL;
             a.download = 'recorded_video.mp4';
             document.body.appendChild(a);
-            
+
             // Programmatically click the link to trigger the download
             a.click();
-            
+
             // Remove the link from the document
             document.body.removeChild(a);
         };
@@ -87,10 +86,10 @@ mediaRecorder.onstop = function() {
     a.href = videoURL;
     a.download = 'recorded_video.webm'; // Use webm format to match the MIME type
     document.body.appendChild(a);
-    
+
     // Programmatically click the link to trigger the download
     a.click();
-    
+
     // Remove the link from the document
     document.body.removeChild(a);
 };
@@ -115,8 +114,6 @@ function stop_recording() {
 
 // Function to smoothly move a variable based on audio volume
 function smoothVolumeMovement(variableToUpdate) {
-
-    
     // Get the current volume level
     analyser.getByteFrequencyData(dataArray);
     const volume = dataArray.reduce((acc, val) => acc + val, 0) / bufferLength;
@@ -129,21 +126,18 @@ function smoothVolumeMovement(variableToUpdate) {
     variableToUpdate += (targetValue - variableToUpdate) * smoothingFactor;
 
     // Ensure variableToUpdate stays within bounds (0 to 1)
-    // variableToUpdate = Math.min(Math.max(variableToUpdate, 0), 5);
-
-    // Return the updated variable
     return Math.min(Math.max(variableToUpdate, 0), 5);
 }
 
 
 function loadImages(folder, frameCount) {
-    let images=[];
+    let images = [];
     for (let i = 0; i < frameCount; i++) {
         const img = new Image();
         img.src = `${folder}/${String(i).padStart(3, '0')}.png`;
         images.push(img);
     }
-    
+
     return images;
 }
 
@@ -180,8 +174,6 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     this.canvases = [];
     this.images.forEach((img)=> {
         let cur_canvas = new OffscreenCanvas(this.width,this.height);
-        // cur_canvas.width=this.width; 
-        // cur_canvas.height = this.height;
         let cur_ctx = cur_canvas.getContext("2d");
         img.onload = () => {cur_ctx.drawImage(img,0,0,this.width,this.height);}
         if (invertColors) {
@@ -194,7 +186,6 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
             }
             cur_ctx.putImageData(imageData, 0, 0);
         }
-        // document.body.appendChild(cur_canvas);
         this.canvases.push(cur_canvas);
     })
 
@@ -204,27 +195,9 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
         ctx.globalAlpha = opacity;
         let [mX, mY] = animation_function((cur_frame*timeshift)+delay);
         let img = this.canvases[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
-    
-    
+
         // Draw the image on the canvas
         ctx.drawImage(img, curX + mX, curY + mY, this.width, this.height);
-    
-        // if (this.invertColors) {
-        //     // Get the image data from the canvas
-        //     let imageData = ctx.getImageData(curX + mX, curY + mY, this.width, this.height);
-        //     let data = imageData.data;
-    
-        //     // Invert the colors while preserving the alpha channel
-        //     for (let i = 0; i < data.length; i += 4) {
-        //         data[i] = 255 - data[i];       // Red
-        //         data[i + 1] = 255 - data[i + 1]; // Green
-        //         data[i + 2] = 255 - data[i + 2]; // Blue
-        //         // Alpha (data[i + 3]) remains unchanged
-        //     }
-    
-        //     // Put the modified image data back on the canvas
-        //     ctx.putImageData(imageData, curX + mX, curY + mY);
-        // }
         ctx.globalAlpha = 1;
     }
 
@@ -312,14 +285,6 @@ function draw_lights(cur_frame) {
     }
 }
 
-// how to make the stream thing
-// 1. create the two gifs
-// 2. create a function that dictates the path, taking in one number and outputting the position allong it
-//    this path should move, eg like the sum of sine waves with diffrent moving phases
-// 3. every frame, generate a lot of positions
-// 4. then, move the gifs to those locations and draw, and repeat for all
-//    should work cause updating the position after drawing does nothing
-
 const side_bob = (cur_frame)=>[bob(cur_frame)[1],0];
 
 var moving_window = new drawn_gif("images/window 3",3,38,0,0,150,150,false);
@@ -363,7 +328,6 @@ const stepMultiplier = 0.1;
 const timeShiftMultiplier = 0.01;
 const order = getRandomOrder(10);
 
-
 function draw_windows(cur_frame, path = path_a, speed = 4, height = 700, spacing = 200) {
     // Calculate the new positions
     let positions = [];
@@ -389,7 +353,6 @@ function draw_windows(cur_frame, path = path_a, speed = 4, height = 700, spacing
         moving_gif.draw(cur_frame + i, x + 36, y + 55);
     }
 }
-
 
 const third_width = canvasWidth / 3;
 
@@ -440,9 +403,6 @@ function draw_text_window(cur_frame) {
     }
 }
 
-// const width = ctx.canvas.width;
-// const height = ctx.canvas.height;
-
 const background_images_pre = loadImages("images/blurred_images",5);
 var background_images = [];
 var finished_images = 0;
@@ -464,16 +424,10 @@ const background_move = [
 ]
 
 function draw_background(cur_frame) {
-    // Code for background
-
-    // ctx.globalAlpha = 0.15;
     for (let i = 0;i<5;i++){
         let [x,y] = background_move[i](cur_frame/24);
         ctx.drawImage(background_images[i],x-200,y-200);
     }
-    // ctx.globalAlpha = 1;
-    
-    // Draw the custom background object
     background.draw(cur_frame);
 }
 
@@ -542,10 +496,6 @@ function restart() {
     frameTimes = [];
     render_text();
 }
-
-// Start the animation loop
-requestAnimationFrame(animate);
-
 
 // Start the animation loop
 requestAnimationFrame(animate);
