@@ -129,10 +129,10 @@ function smoothVolumeMovement(variableToUpdate) {
     variableToUpdate += (targetValue - variableToUpdate) * smoothingFactor;
 
     // Ensure variableToUpdate stays within bounds (0 to 1)
-    variableToUpdate = Math.min(Math.max(variableToUpdate, 0), 5);
+    // variableToUpdate = Math.min(Math.max(variableToUpdate, 0), 5);
 
     // Return the updated variable
-    return variableToUpdate;
+    return Math.min(Math.max(variableToUpdate, 0), 5);
 }
 
 
@@ -186,7 +186,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
         img.onload = () => {cur_ctx.drawImage(img,0,0,this.width,this.height);}
         if (invertColors) {
             let imageData = cur_ctx.getImageData(0, 0, this.width, this.height);
-            let data = imageData.data;
+            let {data} = imageData;
             for (let i = 0; i < data.length; i += 4) {
                 data[i] = 255 - data[i]; // Red
                 data[i + 1] = 255 - data[i + 1]; // Green
@@ -521,6 +521,7 @@ function restart(){
     volume = 0;
     start_offset = performance.now();
     secondary_frame = 0;
+    render_text();
 }
 
 audio.onplay = () => {
@@ -531,3 +532,4 @@ audio.onplay = () => {
 
 animate();
 render_text();
+restart();

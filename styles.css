@@ -6,19 +6,6 @@ body {
     background-color: black;
 }
 
-#visualizer {
-    width: 1920px;
-    height: 1080px;
-    background-color: black;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
-    overflow: hidden;
-    /* filter: invert(1); */
-    border: 1px solid white;
-}
-
 input::file-selector-button,p.filelabel{
     display: inline;
 }
@@ -31,4 +18,25 @@ video {
     position:absolute;
     top: 1500px;
     left: 40px;
+}
+
+#visualizer {
+    aspect-ratio: 16 / 9;
+    width: min(1920px, 50vw);
+    background-color: black;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center center;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    border: 1px solid white;
+}
+
+@media screen and (max-width: 1000px) {
+    #visualizer {
+        transform-origin: center center;
+        transform: translate(-50%, -50%) rotate(90deg);
+        width: min(1920px, 60vh);
+    }
 }

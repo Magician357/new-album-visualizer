@@ -3,6 +3,7 @@ import random
 import os
 
 def generate_blurred_noise(scaled_width, scaled_height, blur_radius, scale_factor=5):
+    # sourcery skip: inline-immediately-returned-variable
     # Calculate original dimensions
     width = scaled_width // scale_factor
     height = scaled_height // scale_factor

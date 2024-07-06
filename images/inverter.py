@@ -2,6 +2,7 @@ import os
 from PIL import Image, ImageOps
 
 def invert_image(image_path):
+    # sourcery skip: inline-immediately-returned-variable
     # Open the image
     image = Image.open(image_path).convert("RGBA")
     
