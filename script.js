@@ -18,7 +18,7 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
 async function load_audio(){
     // Wait for audio element to be ready
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await audio.play();
+    // await audio.play();
 
     // Capture audio stream from the audio element
     audioStream = audio.captureStream();
@@ -52,7 +52,7 @@ async function load_audio(){
 }
 
 const canvas = document.getElementById('visualizer');
-const ctx = canvas.getContext('2d');
+var ctx = enableWebGLCanvas( canvas );
 const audio = document.getElementById('audio');
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -458,7 +458,7 @@ const frameDuration = 1000 / targetFPS;
 const fpsSamples = 10; // Number of frames to average
 
 let lastFrameTime = performance.now();
-let frameTimes = [60,60,60,60,60,60,60,60,60,60]; // Array to store frame times
+let frameTimess = [60,60,60,60,60,60,60,60,60,60]; // Array to store frame times
 
 function animate() {
     requestAnimationFrame(animate);
@@ -470,9 +470,9 @@ function animate() {
     lastFrameTime = current_time - (elapsed % frameDuration);
 
     // Calculate and update fps
-    frameTimes.push(elapsed);
-    frameTimes.shift(); // Remove the oldest frame time
-    let averageFrameTime = frameTimes.reduce((sum, time) => sum + time, 0) / frameTimes.length;
+    frameTimess.push(elapsed);
+    frameTimess.shift(); // Remove the oldest frame time
+    let averageFrameTime = frameTimess.reduce((sum, time) => sum + time, 0) / frameTimess.length;
     let averageFPS = 1000 / averageFrameTime;
 
     fps_monitor.innerText = `${Math.floor(averageFPS * 100) / 100} (${Math.floor(averageFrameTime * 10) / 10} ms per frame)`;
@@ -484,6 +484,8 @@ function animate() {
     volume = smoothVolumeMovement(volume);
     secondary_frame += Math.pow(2, volume * 5) * elapsed / 20;
 
+    ctx.start2D();
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_background(cur_frame);
     draw_windows(secondary_frame);
@@ -494,6 +496,8 @@ function animate() {
     small_visualizer.draw(cur_frame);
     draw_visualizer(880 + (bob(cur_frame * 0.45)[1] * 0.8), 595 + bob((cur_frame * .95) + 7)[1], 160, 100, "black", 3);
     draw_lights(cur_frame);
+    
+    ctx.finish2D();
 }
 
 function restart() {
