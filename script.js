@@ -15,10 +15,13 @@ document.getElementById('audioFileInput').addEventListener('change', async funct
     }
 });
 
+var firsttime=true;
+
 async function load_audio(){
     // Wait for audio element to be ready
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await audio.play();
+    if (!firsttime) {await audio.play();}
+    firsttime=false;
 
     // Capture audio stream from the audio element
     audioStream = audio.captureStream();
@@ -173,7 +176,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
     this.images = loadImages(folder,frameCount);
     this.curX = x;
     this.curY = y;
-    this.width=width; this.height = height;
+    this.width=Math.floor(width); this.height = Math.floor(height);
     this.frameDuration = frameDuration;
     this.frameCount=frameCount;
     this.invertColors=invertColors;
@@ -204,7 +207,7 @@ function drawn_gif(folder,frameCount,frameDuration,x,y,width,height,invertColors
         let img = this.canvases[Math.floor(cur_frame / this.frameDuration) % this.frameCount];
 
         // Draw the image on the canvas
-        ctx.drawImage(img, curX + mX, curY + mY, this.width, this.height);
+        ctx.drawImage(img, (curX + mX)|0, (curY + mY)|0, this.width, this.height);
         ctx.globalAlpha = 1;
     }
 
@@ -255,7 +258,7 @@ inImage.src="images/person.png";
 function draw_mainWindow(cur_frame){
     mainWindow.draw(cur_frame);
     let [tX,tY]=bob(cur_frame+3);
-    ctx.drawImage(inImage,822.5+tX,505+tY,275,510);
+    ctx.drawImage(inImage,(822.5+tX)|0,(505+tY)|0,275,510);
 }
 
 var small_visualizer = new drawn_gif("images/window 2",3,110,870,580,180,120,false,bob_small);
@@ -271,6 +274,7 @@ light_hanging_img.onload = () => {
 
 const spacing = 145;
 const width = 150;
+const width_half = width/2;
 const height = 350;
 var light_window = new drawn_gif("images/light window", 5, 120, 0, 180, width, width, false, bob_light); 
 
@@ -281,9 +285,9 @@ function draw_lights(cur_frame) {
         if (((n-spacing) / (spacing + width)) === 4) { // Check if it is the fifth light
             let swing_angle = Math.sin(cur_frame * 0.05) * Math.PI / 8; // Calculate the swing angle
             ctx.save(); // Save the current state of the canvas
-            ctx.translate(x + width / 2, y); // Move the canvas origin to the top middle of the light
+            ctx.translate((x + width_half)|0, y); // Move the canvas origin to the top middle of the light
             ctx.rotate(swing_angle); // Rotate the canvas by the swing angle
-            ctx.drawImage(light_hanging, -width / 2, 0); // Draw the light at the new origin
+            ctx.drawImage(light_hanging, (-width_half)|0, 0); // Draw the light at the new origin
             ctx.restore(); // Restore the original state of the canvas
         } else {
             ctx.drawImage(light_hanging, x, y); // Draw the light normally
@@ -406,7 +410,7 @@ function draw_text_window(cur_frame) {
         let y = 725 + path_c(x * 0.01, cur_frame * 0.01) * 10;
         moving_window.draw(cur_frame, x, y);
 
-        ctx.drawImage(text_canvas,x+20,y+70-text_offset);
+        ctx.drawImage(text_canvas,(x+20)|0,(y+70-text_offset)|0);
     }
 }
 
@@ -433,7 +437,7 @@ const background_move = [
 function draw_background(cur_frame) {
     for (let i = 0;i<5;i++){
         let [x,y] = background_move[i](cur_frame/24);
-        ctx.drawImage(background_images[i],x-200,y-200);
+        ctx.drawImage(background_images[i],(x-200)|0,(y-200)|0);
     }
     background.draw(cur_frame);
 }
@@ -458,7 +462,7 @@ const frameDuration = 1000 / targetFPS;
 const fpsSamples = 10; // Number of frames to average
 
 let lastFrameTime = performance.now();
-let frameTimes = [60,60,60,60,60,60,60,60,60,60]; // Array to store frame times
+let frameTimes = [targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS]; // Array to store frame times
 
 function animate() {
     requestAnimationFrame(animate);
@@ -500,7 +504,7 @@ function restart() {
     volume = 0;
     start_offset = performance.now();
     secondary_frame = 0;
-    frameTimes = [];
+    frameTimes = [targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS,targetFPS];
     render_text();
 }
 
