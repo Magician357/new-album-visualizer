@@ -529,8 +529,14 @@ audio.onplay = () => {
     if (audioContext.state === 'suspended') {
         audioContext.resume();
     }
+
+    if (!restarted) {
+        restarted=true;
+        restart();
+    }
 };
 
 animate();
 render_text();
-restart();
+
+var restarted = false;
