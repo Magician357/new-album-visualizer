@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>songs free download</title>
+    <style>
+        * {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="audios"></div>
+    <a href="/">back</a>
+    <script>
+        const path = "audio/captions/album/";
+        const song_urls = [
+            "help im dying in a housefire.wav",
+            "the great almighty me.wav",
+            "wait.wav"
+        ];
+
+        const audio_div = document.getElementById("audios");
+
+        song_urls.forEach((song) => {
+            const text = document.createElement("p");
+            text.innerText = song;
+            audio_div.appendChild(text);
+
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.src = path + song;
+            audio_div.appendChild(audio);
+        });
+    </script>
+</body>
+</html>
